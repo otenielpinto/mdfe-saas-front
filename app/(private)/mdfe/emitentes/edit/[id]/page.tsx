@@ -1,19 +1,25 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import EmitenteForm from "@/components/mdfe/EmitenteForm";
-import { getMdfeEmitenteById, getMdfeEmitenteByObjectId } from "@/actions/actMdfeEmitente";
+import {
+  getMdfeEmitenteById,
+  getMdfeEmitenteByObjectId,
+} from "@/actions/actMdfeEmitente";
 import { isValidObjectId } from "@/lib/utils";
 
 interface EmitenteEditPageProps {
   params: {
     id: string;
   };
+  searchParams?: Record<string, string | string[] | undefined>;
 }
 
-export async function generateMetadata({ params }: EmitenteEditPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: EmitenteEditPageProps): Promise<Metadata> {
   // Try to fetch the emitente to get the name for the title
   let emitenteName = "Editar Emitente";
-  
+
   try {
     let response;
     if (isValidObjectId(params.id)) {
@@ -21,23 +27,26 @@ export async function generateMetadata({ params }: EmitenteEditPageProps): Promi
     } else {
       response = await getMdfeEmitenteById(Number(params.id));
     }
-    
+
     if (response.success && response.data) {
-      emitenteName = `Editar ${response.data.razao_social}` || "Editar Emitente";
+      emitenteName =
+        `Editar ${response.data.razao_social}` || "Editar Emitente";
     }
   } catch (error) {
     console.error("Error fetching emitente for metadata:", error);
   }
-  
+
   return {
     title: `${emitenteName} - MDF-e`,
     description: "Edição de emitente MDF-e",
   };
 }
 
-export default async function EmitenteEditPage({ params }: EmitenteEditPageProps) {
+export default async function EmitenteEditPage({
+  params,
+}: EmitenteEditPageProps) {
   const { id } = params;
-  
+
   // Fetch emitente data
   let response;
   try {
@@ -50,11 +59,11 @@ export default async function EmitenteEditPage({ params }: EmitenteEditPageProps
     console.error("Error fetching emitente:", error);
     notFound();
   }
-  
+
   if (!response.success || !response.data) {
     notFound();
   }
-  
+
   return (
     <div className="container mx-auto py-6">
       <div className="mb-6">
@@ -63,7 +72,7 @@ export default async function EmitenteEditPage({ params }: EmitenteEditPageProps
           Atualize as informações do emitente MDF-e
         </p>
       </div>
-      
+
       <EmitenteForm emitente={response.data} isEdit={true} />
     </div>
   );

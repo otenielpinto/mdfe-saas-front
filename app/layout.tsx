@@ -4,8 +4,9 @@ import { Toaster } from "@/components/ui/sonner";
 import ReactQueryProvider from "@/providers/react-query";
 
 export const metadata: Metadata = {
-  title: "WTA Connect",
-  description: "WTA Software: Inovando o futuro, uma linha de código por vez.",
+  title: "Sistema MDFe",
+  description:
+    "Sistema de Manifesto Eletrônico de Documentos Fiscais (MDFe) - Gerenciamento completo de documentos fiscais eletrônicos.",
 };
 
 export default function RootLayout({
