@@ -9,7 +9,7 @@ function ReactQueryProvider({ children }: React.PropsWithChildren) {
       defaultOptions: {
         queries: {
           refetchOnWindowFocus: false,
-          staleTime: 1000 * 60 * 10, // 10 mins
+          staleTime: 1000 * 60 * 5, // 5 mins
         },
       },
     })
