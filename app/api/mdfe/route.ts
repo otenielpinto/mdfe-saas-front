@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { validateForm } from "@/utils/validateFormData";
+//import { validateForm } from "@/utils/validateFormData";
 
 const DESTINATION_API = "https://api-destino.exemplo.com/endpoint";
 
@@ -8,7 +8,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
 
     // Validação
-    const validatedData = validateForm(body);
+    //const validatedData = validateForm(body);
+    const validatedData = body; // Substitua pela sua função de validação
 
     // Encaminhamento para API de destino
     const apiResponse = await fetch(DESTINATION_API, {

@@ -62,7 +62,7 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "Listar MDF-e",
+          title: "MDF-e",
           url: "/mdfe",
         },
       ],
@@ -91,6 +91,11 @@ const data = {
         {
           title: "Motoristas",
           url: "/mdfe/motoristas",
+        },
+
+        {
+          title: "Configuracao",
+          url: "/mdfe/config",
         },
       ],
     },

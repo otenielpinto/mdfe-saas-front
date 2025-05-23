@@ -154,17 +154,15 @@ export default function NewMdfePage() {
         {currentStep === 6 && (
           <MdfeInformacoesAdicionaisForm onSubmit={handleSubmitStep} />
         )}
-      </div>
-
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handlePrev}
-          disabled={currentStep === 0}
-        >
-          Voltar
-        </Button>
-        {/* O botão de próximo foi removido aqui pois cada formulário tem seu próprio botão de continuar */}
+        <div className="flex justify-between">
+          <Button
+            variant="outline"
+            onClick={handlePrev}
+            disabled={currentStep === 0}
+          >
+            Voltar
+          </Button>
+        </div>
       </div>
     </div>
   );
