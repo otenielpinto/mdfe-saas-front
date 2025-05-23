@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Wand2, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
@@ -12,12 +12,6 @@ import { MdfeAquaviarioForm } from "@/components/mdfe/MdfeAquaviarioForm";
 import { MdfeDocumentosForm } from "@/components/mdfe/MdfeDocumentosForm";
 import { MdfeTotalizadoresForm } from "@/components/mdfe/MdfeTotalizadoresForm";
 import { MdfeInformacoesAdicionaisForm } from "@/components/mdfe/MdfeInformacoesAdicionaisForm";
-import {
-  getCurrentUser,
-  saveDraft,
-  loadDraft,
-  deleteDraft,
-} from "@/lib/adaptadores/mdfe";
 
 const steps = [
   "Dados",
@@ -52,9 +46,7 @@ const mockEmitenteData = {
 export default function NewMdfePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
-  const [draftLoaded, setDraftLoaded] = useState(false);
-  const [savingDraft, setSavingDraft] = useState(false);
-  const emitenteFormRef = useRef(null);
+
   const { toast } = useToast();
 
   const handleNext = () => {
@@ -90,82 +82,8 @@ export default function NewMdfePage() {
     }
   };
 
-  // Load draft when component mounts
-  useEffect(() => {
-    const loadFormDraft = async () => {
-      const userId = await getCurrentUser();
-      if (!userId) return;
-
-      const draft = await loadDraft(userId);
-      if (draft) {
-        setFormData(draft);
-        setDraftLoaded(true);
-        toast({
-          title: "Rascunho carregado",
-          description:
-            "O formulário foi preenchido com os dados salvos anteriormente.",
-        });
-      }
-    };
-
-    loadFormDraft();
-  }, [toast]);
-
-  // Auto save draft on form changes
-  useEffect(() => {
-    // Debounce function
-    const debounce = (func: Function, delay: number) => {
-      let timerId: NodeJS.Timeout;
-
-      return function (...args: any[]) {
-        if (timerId) clearTimeout(timerId);
-
-        timerId = setTimeout(() => {
-          func(...args);
-        }, delay);
-      };
-    };
-
-    const saveFormDraft = async () => {
-      if (savingDraft) return;
-      setSavingDraft(true);
-      const userId = await getCurrentUser();
-      if (!userId) return;
-
-      await saveDraft(userId, formData);
-      setSavingDraft(false);
-      toast({
-        title: "Rascunho salvo",
-        description: "O progresso do formulário foi salvo automaticamente.",
-      });
-    };
-
-    // Debounced save function
-    const debouncedSave = debounce(saveFormDraft, 500);
-
-    debouncedSave();
-  }, [formData, toast, savingDraft]);
-
-  const handleDiscardDraft = async () => {
-    const userId = await getCurrentUser();
-    if (!userId) return;
-
-    await deleteDraft(userId);
-    setFormData({});
-    setDraftLoaded(false);
-    toast({
-      title: "Rascunho descartado",
-      description: "O rascunho do formulário foi removido.",
-    });
-  };
-
   const handleEmit = async () => {
-    const userId = await getCurrentUser();
-    if (!userId) return;
-
-    await deleteDraft(userId);
     setFormData({});
-    setDraftLoaded(false);
     toast({
       title: "MDF-e Emitido",
       description: "O MDF-e foi emitido com sucesso e o rascunho foi removido.",
@@ -190,17 +108,7 @@ export default function NewMdfePage() {
               Auto preencher
             </Button>
           )}
-          <Button
-            variant="outline"
-            onClick={handleDiscardDraft}
-            disabled={savingDraft}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Descartar rascunho
-          </Button>
-          <Button onClick={handleEmit} disabled={savingDraft}>
-            Emitir
-          </Button>
+          <Button onClick={handleEmit}>Emitir</Button>
         </div>
       </div>
 
