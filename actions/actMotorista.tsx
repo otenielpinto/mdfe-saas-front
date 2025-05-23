@@ -12,7 +12,7 @@ export async function getAllMotoristas(): Promise<MotoristaResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const motoristas = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .find()
       .toArray();
     await TMongo.mongoDisconnect(client);
@@ -37,13 +37,11 @@ export async function getAllMotoristas(): Promise<MotoristaResponse> {
  * @param id Driver ID
  * @returns Response with driver object
  */
-export async function getMotoristaById(
-  id: number
-): Promise<MotoristaResponse> {
+export async function getMotoristaById(id: number): Promise<MotoristaResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const motorista = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .findOne({ id: Number(id) });
     await TMongo.mongoDisconnect(client);
 
@@ -81,7 +79,7 @@ export async function getMotoristaByObjectId(
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const motorista = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .findOne({ _id: new ObjectId(id) });
     await TMongo.mongoDisconnect(client);
 
@@ -119,7 +117,7 @@ export async function getMotoristaByCpf(
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const motorista = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .findOne({ CPF: cpf });
     await TMongo.mongoDisconnect(client);
 
@@ -170,7 +168,7 @@ export async function createMotorista(
     // Check if ID already exists
     if (data.id) {
       const existingMotorista = await clientdb
-        .collection("motorista")
+        .collection("mdfe_motorista")
         .findOne({ id: Number(data.id) });
 
       if (existingMotorista) {
@@ -185,7 +183,7 @@ export async function createMotorista(
 
     // Check if CPF already exists
     const existingMotorista = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .findOne({ CPF: data.CPF });
 
     if (existingMotorista) {
@@ -205,7 +203,7 @@ export async function createMotorista(
     };
 
     const result = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .insertOne(dataWithTimestamps);
     await TMongo.mongoDisconnect(client);
 
@@ -242,7 +240,7 @@ export async function updateMotorista(
 
     // Check if driver exists
     const existingMotorista = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .findOne({ id: Number(id) });
 
     if (!existingMotorista) {
@@ -261,7 +259,7 @@ export async function updateMotorista(
     };
 
     await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .updateOne({ id: Number(id) }, { $set: dataWithTimestamp });
     await TMongo.mongoDisconnect(client);
 
@@ -298,7 +296,7 @@ export async function updateMotoristaByObjectId(
 
     // Check if driver exists
     const existingMotorista = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .findOne({ _id: new ObjectId(id) });
 
     if (!existingMotorista) {
@@ -317,7 +315,7 @@ export async function updateMotoristaByObjectId(
     };
 
     await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .updateOne({ _id: new ObjectId(id) }, { $set: dataWithTimestamp });
     await TMongo.mongoDisconnect(client);
 
@@ -344,15 +342,13 @@ export async function updateMotoristaByObjectId(
  * @param id Driver ID
  * @returns Response with delete result
  */
-export async function deleteMotorista(
-  id: number
-): Promise<MotoristaResponse> {
+export async function deleteMotorista(id: number): Promise<MotoristaResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if driver exists
     const existingMotorista = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .findOne({ id: Number(id) });
 
     if (!existingMotorista) {
@@ -364,7 +360,7 @@ export async function deleteMotorista(
       };
     }
 
-    await clientdb.collection("motorista").deleteOne({ id: Number(id) });
+    await clientdb.collection("mdfe_motorista").deleteOne({ id: Number(id) });
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -395,7 +391,7 @@ export async function deleteMotoristaByObjectId(
 
     // Check if driver exists
     const existingMotorista = await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .findOne({ _id: new ObjectId(id) });
 
     if (!existingMotorista) {
@@ -408,7 +404,7 @@ export async function deleteMotoristaByObjectId(
     }
 
     await clientdb
-      .collection("motorista")
+      .collection("mdfe_motorista")
       .deleteOne({ _id: new ObjectId(id) });
     await TMongo.mongoDisconnect(client);
 

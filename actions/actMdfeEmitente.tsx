@@ -3,6 +3,7 @@
 import { TMongo } from "@/infra/mongoClient";
 import { ObjectId } from "mongodb";
 import { MdfeEmitente, MdfeEmitenteResponse } from "@/types/MdfeEmitenteTypes";
+import { getUser } from "@/actions/actSession";
 
 /**
  * Get all MDF-e emitentes
@@ -10,10 +11,22 @@ import { MdfeEmitente, MdfeEmitenteResponse } from "@/types/MdfeEmitenteTypes";
  */
 export async function getAllMdfeEmitentes(): Promise<MdfeEmitenteResponse> {
   try {
+    const user = await getUser();
+
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message:
+          "Usuário não autenticado ou sem tenant associado" +
+          JSON.stringify(user),
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
     const emitentes = await clientdb
       .collection("mdfe_emitente")
-      .find()
+      .find({ id_tenant: Number(user.id_tenant) })
       .toArray();
     await TMongo.mongoDisconnect(client);
 
@@ -41,10 +54,20 @@ export async function getMdfeEmitenteById(
   id: number
 ): Promise<MdfeEmitenteResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const emitente = await clientdb
-      .collection("mdfe_emitente")
-      .findOne({ id: Number(id) });
+    const emitente = await clientdb.collection("mdfe_emitente").findOne({
+      id: Number(id),
+      id_tenant: Number(user.id_tenant),
+    });
     await TMongo.mongoDisconnect(client);
 
     if (!emitente) {
@@ -79,10 +102,20 @@ export async function getMdfeEmitenteByObjectId(
   id: string
 ): Promise<MdfeEmitenteResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const emitente = await clientdb
-      .collection("mdfe_emitente")
-      .findOne({ _id: new ObjectId(id) });
+    const emitente = await clientdb.collection("mdfe_emitente").findOne({
+      _id: new ObjectId(id),
+      id_tenant: Number(user.id_tenant),
+    });
     await TMongo.mongoDisconnect(client);
 
     if (!emitente) {
@@ -117,13 +150,25 @@ export async function createMdfeEmitente(
   data: MdfeEmitente
 ): Promise<MdfeEmitenteResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
 
-    // Check if ID already exists
+    // Check if ID already exists within the tenant
     if (data.id) {
       const existingEmitente = await clientdb
         .collection("mdfe_emitente")
-        .findOne({ id: Number(data.id) });
+        .findOne({
+          id: Number(data.id),
+          id_tenant: Number(user.id_tenant),
+        });
 
       if (existingEmitente) {
         await TMongo.mongoDisconnect(client);
@@ -135,11 +180,14 @@ export async function createMdfeEmitente(
       }
     }
 
-    // Check if CNPJ already exists
+    // Check if CNPJ already exists within the tenant
     if (data.cpfcnpj) {
       const existingEmitente = await clientdb
         .collection("mdfe_emitente")
-        .findOne({ cpfcnpj: data.cpfcnpj });
+        .findOne({
+          cpfcnpj: data.cpfcnpj,
+          id_tenant: Number(user.id_tenant),
+        });
 
       if (existingEmitente) {
         await TMongo.mongoDisconnect(client);
@@ -151,9 +199,10 @@ export async function createMdfeEmitente(
       }
     }
 
-    // Add timestamps
+    // Add timestamps and tenant ID
     const dataWithTimestamps = {
       ...data,
+      id_tenant: Number(user.id_tenant),
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -390,10 +439,20 @@ export async function getMdfeEmitenteByCnpj(
   cnpj: string
 ): Promise<MdfeEmitenteResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const emitente = await clientdb
-      .collection("mdfe_emitente")
-      .findOne({ cpfcnpj: cnpj });
+    const emitente = await clientdb.collection("mdfe_emitente").findOne({
+      cpfcnpj: cnpj,
+      id_tenant: Number(user.id_tenant),
+    });
     await TMongo.mongoDisconnect(client);
 
     if (!emitente) {
@@ -428,10 +487,22 @@ export async function getMdfeEmitentesByEmpresa(
   empresaId: number
 ): Promise<MdfeEmitenteResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
     const emitentes = await clientdb
       .collection("mdfe_emitente")
-      .find({ empresa: Number(empresaId) })
+      .find({
+        empresa: Number(empresaId),
+        id_tenant: Number(user.id_tenant),
+      })
       .toArray();
     await TMongo.mongoDisconnect(client);
 
@@ -459,10 +530,19 @@ export async function getMdfeEmitentesByUf(
   uf: string
 ): Promise<MdfeEmitenteResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
     const emitentes = await clientdb
       .collection("mdfe_emitente")
-      .find({ uf: uf.toUpperCase() })
+      .find({ uf: uf.toUpperCase(), id_tenant: Number(user.id_tenant) })
       .toArray();
     await TMongo.mongoDisconnect(client);
 

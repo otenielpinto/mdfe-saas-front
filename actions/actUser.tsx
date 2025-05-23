@@ -7,7 +7,7 @@ export async function getUserEmpresas(userId: string) {
     return [];
   }
   const { client, clientdb } = await TMongo.connectToDatabase();
-  const user = await clientdb.collection("user").findOne({ id: userId });
+  const user: any = await clientdb.collection("user").findOne({ id: userId });
 
   if (!user) {
     await TMongo.mongoDisconnect(client);
@@ -15,7 +15,10 @@ export async function getUserEmpresas(userId: string) {
     return [];
   }
   //Sempre gravar o array com int32 para evitar problemas de comparação ****
-  const empresas = await clientdb.collection("empresa").find({}).toArray();
+  const empresas = await clientdb
+    .collection("empresa")
+    .find({ id_tenant: user.id_tenant })
+    .toArray();
   const filteredEmpresas = empresas.filter((empresa: any) =>
     user.emp_acesso.includes(Number(empresa.id))
   );

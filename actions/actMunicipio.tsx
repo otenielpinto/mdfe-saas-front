@@ -22,14 +22,14 @@ export async function createAllMunicipios() {
         return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       };
 
-      const nome = municipio.nome.toUpperCase();
+      const nome = municipio?.nome?.toUpperCase();
       const descricao = removeAccents(nome); // Apply removeAccents after converting to uppercase
 
       return {
         descricao: descricao,
         nome: nome,
         codigoIbge: municipio.id,
-        uf: municipio.microrregiao.mesorregiao.UF.sigla,
+        uf: municipio?.microrregiao?.mesorregiao?.UF?.sigla,
       };
     });
 

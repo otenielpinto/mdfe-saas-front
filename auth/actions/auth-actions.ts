@@ -50,7 +50,8 @@ export async function login(formData: FormData) {
     isAdmin: user.isAdmin,
     codigo: user.codigo,
     emp_acesso: user.emp_acesso || [],
-    empresa: user.emp_acesso[0] ? user.emp_acesso[0] : 0,
+    id_empresa: user.emp_acesso[0] ? user.emp_acesso[0] : 0,
+    id_tenant: user.id_tenant,
   });
 
   redirect(
@@ -89,6 +90,8 @@ export async function createUser(body: User): Promise<any> {
       emp_acesso: [],
       createdAt: new Date(),
       updatedAt: new Date(),
+      id_empresa: 0,
+      id_tenant: 0,
     };
     response = await clientdb.collection("user").insertOne(user);
   }
@@ -122,6 +125,8 @@ export async function getUserByEmail(email: any): Promise<any> {
       emp_acesso: [],
       createdAt: new Date(),
       updatedAt: new Date(),
+      id_empresa: 0,
+      id_tenant: 0,
     };
     response = await clientdb.collection("user").insertOne(user);
   }

@@ -1,6 +1,7 @@
 "use server";
 
 import { TMongo } from "@/infra/mongoClient";
+import { getUser } from "@/actions/actSession";
 
 /**
  * @name gen_id
@@ -21,22 +22,40 @@ import { TMongo } from "@/infra/mongoClient";
  *   - data: number | null - The next available sequence number for the collection, or null if an error occurred.
  *   - error: string | undefined - An error message if the operation was not successful.
  */
+const listaEspecial = ["empresa", "tenant"];
 export async function gen_id(collectionName: string): Promise<{
   success: boolean;
   message: string;
   data: number | null;
   error?: string;
 }> {
+  let user = await getUser();
+  let sequenceDocument = null;
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
-    const sequenceDocument = await clientdb
-      .collection("tmp_generator")
-      .findOneAndUpdate(
-        { table_name: collectionName },
-        { $inc: { value: 1 } },
-        { upsert: true, returnDocument: "after" }
-      );
+    if (listaEspecial.includes(collectionName)) {
+      sequenceDocument = await clientdb
+        .collection("tmp_generator")
+        .findOneAndUpdate(
+          { table_name: collectionName },
+          { $inc: { value: 1 } },
+          { upsert: true, returnDocument: "after" }
+        );
+    } else {
+      sequenceDocument = await clientdb
+        .collection("tmp_generator")
+        .findOneAndUpdate(
+          {
+            table_name: collectionName,
+            id_tenant: user?.id_tenant,
+            id_empresa: user?.id_empresa,
+          },
+          { $inc: { value: 1 } },
+          { upsert: true, returnDocument: "after" }
+        );
+    }
 
     await TMongo.mongoDisconnect(client);
 

@@ -5,6 +5,7 @@
 export interface MdfeEmitente {
   _id?: any; // MongoDB ObjectId
   id?: number;
+  id_tenant?: number; // Tenant ID for multi-tenancy
   empresa?: number;
   cpfcnpj?: string;
   razao_social?: string;
