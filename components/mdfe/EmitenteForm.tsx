@@ -89,8 +89,6 @@ export default function EmitenteForm({
       telefone: emitente?.telefone || "",
       ie: emitente?.ie || "",
       email: emitente?.email || "",
-      certificado_caminho: emitente?.certificado_caminho || "",
-      certificado_senha: emitente?.certificado_senha || "",
     },
   });
 

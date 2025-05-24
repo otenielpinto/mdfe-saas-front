@@ -4,6 +4,7 @@ import { TMongo } from "@/infra/mongoClient";
 import { ObjectId } from "mongodb";
 import { MdfeEmitente, MdfeEmitenteResponse } from "@/types/MdfeEmitenteTypes";
 import { getUser } from "@/actions/actSession";
+import { getMunicipioByUfAndDescricao } from "@/actions/actMunicipio";
 
 /**
  * Get all MDF-e emitentes
@@ -26,7 +27,10 @@ export async function getAllMdfeEmitentes(): Promise<MdfeEmitenteResponse> {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const emitentes = await clientdb
       .collection("mdfe_emitente")
-      .find({ id_tenant: Number(user.id_tenant) })
+      .find({
+        id_tenant: Number(user.id_tenant),
+        empresa: Number(user.id_empresa),
+      })
       .toArray();
     await TMongo.mongoDisconnect(client);
 
@@ -159,6 +163,12 @@ export async function createMdfeEmitente(
       };
     }
 
+    let row = await getMunicipioByUfAndDescricao(
+      data?.uf || "RS",
+      data?.nome_municipio || ""
+    );
+    data.codigo_municipio = row?.codigoIbge || 0;
+
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if ID already exists within the tenant
@@ -240,6 +250,12 @@ export async function updateMdfeEmitente(
   id: number,
   data: Partial<MdfeEmitente>
 ): Promise<MdfeEmitenteResponse> {
+  let row = await getMunicipioByUfAndDescricao(
+    data?.uf || "RS",
+    data?.nome_municipio || ""
+  );
+  data.codigo_municipio = row?.codigoIbge || 0;
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
@@ -296,6 +312,12 @@ export async function updateMdfeEmitenteByObjectId(
   id: string,
   data: Partial<MdfeEmitente>
 ): Promise<MdfeEmitenteResponse> {
+  let row = await getMunicipioByUfAndDescricao(
+    data?.uf || "RS",
+    data?.nome_municipio || ""
+  );
+  data.codigo_municipio = row?.codigoIbge || 0;
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 

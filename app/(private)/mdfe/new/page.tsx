@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Wand2, Save, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
+import { getMdfeConfig } from "@/actions/actMdfeConfig";
+import { getAllMdfeEmitentes } from "@/actions/actMdfeEmitente";
 import { MdfeEmitenteForm } from "@/components/mdfe/MdfeEmitenteForm";
 import { MdfeDadosForm } from "@/components/mdfe/MdfeDadosForm";
 import { MdfeRodoviarioForm } from "@/components/mdfe/MdfeRodoviarioForm";
@@ -23,31 +25,193 @@ const steps = [
   "Informacoes adicionais",
 ];
 
-// Mock data for Emitente form
-const mockEmitenteData = {
-  CNPJ: "12.345.678/0001-90",
-  IE: "123456789",
-  xNome: "Transportes Brasil LTDA",
-  xFant: "TransBrasil",
-  enderEmit: {
-    xLgr: "Avenida Paulista",
-    nro: "1578",
-    xCpl: "Andar 15",
-    xBairro: "Bela Vista",
-    cMun: "3550308", // Código IBGE de São Paulo
-    xMun: "São Paulo",
-    CEP: "01310-200",
-    UF: "SP",
-    fone: "(11) 98765-4321",
-    email: "contato@transportesbrasil.com.br",
-  },
-};
-
 export default function NewMdfePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
 
   const { toast } = useToast();
+
+  // Carregar dados de configuração padrão ao inicializar
+  useEffect(() => {
+    const loadDefaultConfig = async () => {
+      try {
+        setIsLoading(true);
+        const configResponse = await getMdfeConfig();
+        const emitenteResponse = await getAllMdfeEmitentes();
+
+        if (configResponse.success && configResponse.data) {
+          const config = configResponse.data;
+
+          // Mapear dados de configuração para o formato do formulário
+          const defaultFormData = {
+            dados: {
+              cUF: config.cUF?.toString() || "",
+              tpEmit: config.tpEmit?.toString() || "1",
+              tpTransp: config.tpTransp?.toString() || "1",
+              tpAmb: config.tpAmb?.toString() || "2",
+              tpEmis: "1",
+              mod: config.mod?.toString() || "58",
+              serie: config.serie?.toString() || "1",
+              numero: "",
+              cMDF: "",
+              cDV: "",
+              dhEmi: new Date().toISOString().split("T")[0],
+              tpModal: config.modal?.toString() || "1",
+              ufIni: config.UFIni || "",
+              ufFim: config.UFFim || "",
+              dhIniViagem: "",
+              infMunCarrega:
+                config.infMunCarrega && config.infMunCarrega.length > 0
+                  ? config.infMunCarrega
+                  : [{ cMunCarrega: "", xMunCarrega: "" }],
+              infPercurso:
+                config.infPercurso && config.infPercurso.length > 0
+                  ? config.infPercurso.map((p: any) => p.UFPer).join(", ")
+                  : "",
+            },
+          };
+
+          // Se houver emitentes disponíveis, preencher com o primeiro emitente
+          if (
+            emitenteResponse.success &&
+            emitenteResponse.data &&
+            Array.isArray(emitenteResponse.data) &&
+            emitenteResponse.data.length > 0
+          ) {
+            const primeiroEmitente = emitenteResponse.data[0];
+
+            defaultFormData.emitente = {
+              CNPJ: primeiroEmitente.cpfcnpj || "",
+              IE: primeiroEmitente.ie || "",
+              xNome: primeiroEmitente.razao_social || "",
+              xFant: primeiroEmitente.fantasia || "",
+              enderEmit: {
+                xLgr: primeiroEmitente.logradouro || "",
+                nro: primeiroEmitente.numero || "",
+                xCpl: primeiroEmitente.complemento || "",
+                xBairro: primeiroEmitente.bairro || "",
+                cMun: primeiroEmitente.codigo_municipio?.toString() || "",
+                xMun: primeiroEmitente.nome_municipio || "",
+                CEP: primeiroEmitente.cep || "",
+                UF: primeiroEmitente.uf || "",
+                fone: primeiroEmitente.telefone || "",
+                email: primeiroEmitente.email || "",
+              },
+            };
+
+            toast({
+              title: "Dados carregados",
+              description: `Configuração e emitente "${primeiroEmitente.razao_social}" carregados com sucesso.`,
+            });
+          } else {
+            toast({
+              title: "Configuração carregada",
+              description:
+                "Dados padrão do MDFe foram carregados. Nenhum emitente encontrado.",
+            });
+          }
+
+          setFormData(defaultFormData);
+        } else {
+          console.log("Nenhuma configuração encontrada, usando valores padrão");
+          // Definir valores padrão mínimos se não houver configuração
+          const defaultFormData = {
+            dados: {
+              cUF: "",
+              tpEmit: "1",
+              tpTransp: "1",
+              tpAmb: "2",
+              tpEmis: "1",
+              mod: "58",
+              serie: "1",
+              numero: "",
+              cMDF: "",
+              cDV: "",
+              dhEmi: new Date().toISOString().split("T")[0],
+              tpModal: "1",
+              ufIni: "",
+              ufFim: "",
+              dhIniViagem: "",
+              infMunCarrega: [{ cMunCarrega: "", xMunCarrega: "" }],
+              infPercurso: "",
+            },
+          };
+
+          // Tentar preencher emitente mesmo sem configuração
+          if (
+            emitenteResponse.success &&
+            emitenteResponse.data &&
+            Array.isArray(emitenteResponse.data) &&
+            emitenteResponse.data.length > 0
+          ) {
+            const primeiroEmitente = emitenteResponse.data[0];
+
+            defaultFormData.emitente = {
+              CNPJ: primeiroEmitente.cpfcnpj || "",
+              IE: primeiroEmitente.ie || "",
+              xNome: primeiroEmitente.razao_social || "",
+              xFant: primeiroEmitente.fantasia || "",
+              enderEmit: {
+                xLgr: primeiroEmitente.logradouro || "",
+                nro: primeiroEmitente.numero || "",
+                xCpl: primeiroEmitente.complemento || "",
+                xBairro: primeiroEmitente.bairro || "",
+                cMun: primeiroEmitente.codigo_municipio?.toString() || "",
+                xMun: primeiroEmitente.nome_municipio || "",
+                CEP: primeiroEmitente.cep || "",
+                UF: primeiroEmitente.uf || "",
+                fone: primeiroEmitente.telefone || "",
+                email: primeiroEmitente.email || "",
+              },
+            };
+
+            toast({
+              title: "Emitente carregado",
+              description: `Emitente "${primeiroEmitente.razao_social}" carregado com sucesso.`,
+            });
+          }
+
+          setFormData(defaultFormData);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar configuração:", error);
+        toast({
+          title: "Erro",
+          description:
+            "Erro ao carregar configuração padrão. Usando valores padrão.",
+          variant: "destructive",
+        });
+
+        // Usar valores padrão em caso de erro
+        setFormData({
+          dados: {
+            cUF: "",
+            tpEmit: "1",
+            tpTransp: "1",
+            tpAmb: "2",
+            tpEmis: "1",
+            mod: "58",
+            serie: "1",
+            numero: "",
+            cMDF: "",
+            cDV: "",
+            dhEmi: new Date().toISOString().split("T")[0],
+            tpModal: "1",
+            ufIni: "",
+            ufFim: "",
+            dhIniViagem: "",
+            infMunCarrega: [{ cMunCarrega: "", xMunCarrega: "" }],
+            infPercurso: "",
+          },
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDefaultConfig();
+  }, [toast]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -76,12 +240,6 @@ export default function NewMdfePage() {
     }
   };
 
-  const autoFillEmitente = () => {
-    if (currentStep === 1) {
-      handleSubmitStep(mockEmitenteData);
-    }
-  };
-
   const handleEmit = async () => {
     setFormData({});
     toast({
@@ -102,12 +260,6 @@ export default function NewMdfePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Emitir novo MDF-e</h1>
         <div className="flex gap-2">
-          {currentStep === 1 && (
-            <Button variant="outline" onClick={autoFillEmitente}>
-              <Wand2 className="mr-2 h-4 w-4" />
-              Auto preencher
-            </Button>
-          )}
           <Button onClick={handleEmit}>Emitir</Button>
         </div>
       </div>
@@ -137,32 +289,55 @@ export default function NewMdfePage() {
       </div>
 
       <div className="rounded-md border p-6">
-        {currentStep === 0 && <MdfeDadosForm onSubmit={handleSubmitStep} />}
-        {currentStep === 1 && <MdfeEmitenteForm onSubmit={handleSubmitStep} />}
-        {currentStep === 2 && (
-          <MdfeRodoviarioForm onSubmit={handleSubmitStep} />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+              <p className="text-muted-foreground">
+                Carregando configuração padrão...
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            {currentStep === 0 && (
+              <MdfeDadosForm
+                onSubmit={handleSubmitStep}
+                initialData={formData.dados}
+              />
+            )}
+            {currentStep === 1 && (
+              <MdfeEmitenteForm
+                onSubmit={handleSubmitStep}
+                initialData={formData.emitente}
+              />
+            )}
+            {currentStep === 2 && (
+              <MdfeRodoviarioForm onSubmit={handleSubmitStep} />
+            )}
+            {currentStep === 3 && (
+              <MdfeAquaviarioForm onSubmit={handleSubmitStep} />
+            )}
+            {currentStep === 4 && (
+              <MdfeDocumentosForm onSubmit={handleSubmitStep} />
+            )}
+            {currentStep === 5 && (
+              <MdfeTotalizadoresForm onSubmit={handleSubmitStep} />
+            )}
+            {currentStep === 6 && (
+              <MdfeInformacoesAdicionaisForm onSubmit={handleSubmitStep} />
+            )}
+            <div className="flex justify-between">
+              <Button
+                variant="outline"
+                onClick={handlePrev}
+                disabled={currentStep === 0}
+              >
+                Voltar
+              </Button>
+            </div>
+          </>
         )}
-        {currentStep === 3 && (
-          <MdfeAquaviarioForm onSubmit={handleSubmitStep} />
-        )}
-        {currentStep === 4 && (
-          <MdfeDocumentosForm onSubmit={handleSubmitStep} />
-        )}
-        {currentStep === 5 && (
-          <MdfeTotalizadoresForm onSubmit={handleSubmitStep} />
-        )}
-        {currentStep === 6 && (
-          <MdfeInformacoesAdicionaisForm onSubmit={handleSubmitStep} />
-        )}
-        <div className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={handlePrev}
-            disabled={currentStep === 0}
-          >
-            Voltar
-          </Button>
-        </div>
       </div>
     </div>
   );

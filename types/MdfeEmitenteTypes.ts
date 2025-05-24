@@ -26,9 +26,7 @@ export interface MdfeEmitente {
   cnae?: number;
   crt?: number;
   email?: string;
-  certificado_caminho?: string;
-  certificado_senha?: string;
-  certificado_numserie?: string;
+
   geral_mensagem?: string;
   geral_danfe?: number;
   geral_formatoemissao?: number;
@@ -38,10 +36,7 @@ export interface MdfeEmitente {
   webservice_uf?: string;
   webservice_ambiente?: number;
   webservice_visualizar?: number;
-  proxy_host?: string;
-  proxy_porta?: string;
-  proxy_user?: string;
-  proxy_pass?: string;
+
   mail_host?: string;
   mail_port?: string;
   mail_user?: string;
@@ -50,6 +45,8 @@ export interface MdfeEmitente {
   mail_ssl?: number;
   mail_tls?: number;
   mail_mensagem?: string;
+  mail_responder?: string;
+
   msg_simples_nacional?: string;
   msg_substituicao?: string;
   msg_bc_reduzida?: string;
@@ -57,18 +54,11 @@ export interface MdfeEmitente {
   msg_suspensao?: string;
   msg_diferimento?: string;
   msg_outros?: string;
-  dir_empresa?: string;
-  email_notificacao?: string;
+
   site?: string;
   idtoken?: string;
   token?: string;
-  sincrono?: string;
-  param_nfc?: string;
   modcertificado?: string;
-  mail_responder?: string;
-  aprox_trib_federal?: number;
-  aprox_trib_estadual?: number;
-  aprox_trib_municipal?: number;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,12 +12,14 @@ import {
 import { FormEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { UF_DATA } from "@/actions/actUF";
 
 interface MdfeDadosFormProps {
   onSubmit: (data: any) => void;
+  initialData?: any;
 }
 
-export function MdfeDadosForm({ onSubmit }: MdfeDadosFormProps) {
+export function MdfeDadosForm({ onSubmit, initialData }: MdfeDadosFormProps) {
   const [formData, setFormData] = useState({
     cUF: "", // Código da UF do emitente do Documento Fiscal
     tpEmit: "1",
@@ -36,7 +38,22 @@ export function MdfeDadosForm({ onSubmit }: MdfeDadosFormProps) {
     dhIniViagem: "", // Data e hora previstas de início da Viagem
     indCanalVerde: false, // Indicador de participação do Canal Verde
     indCarregaPosterior: false,
+    infMunCarrega: [{ cMunCarrega: "", xMunCarrega: "" }],
+    infPercurso: "",
   });
+
+  // Atualizar formData quando initialData mudar
+  useEffect(() => {
+    if (initialData) {
+      setFormData((prev) => ({
+        ...prev,
+        ...initialData,
+      }));
+    }
+  }, [initialData]);
+
+  // Ensure UF_DATA is an array with fallback
+  const ufList = Array.isArray(UF_DATA) ? UF_DATA : [];
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -56,37 +73,6 @@ export function MdfeDadosForm({ onSubmit }: MdfeDadosFormProps) {
     onSubmit(formData);
   };
 
-  // Lista de UFs brasileiras
-  const ufs = [
-    "AC",
-    "AL",
-    "AM",
-    "AP",
-    "BA",
-    "CE",
-    "DF",
-    "ES",
-    "GO",
-    "MA",
-    "MG",
-    "MS",
-    "MT",
-    "PA",
-    "PB",
-    "PE",
-    "PI",
-    "PR",
-    "RJ",
-    "RN",
-    "RO",
-    "RR",
-    "RS",
-    "SC",
-    "SE",
-    "SP",
-    "TO",
-  ];
-
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="grid grid-cols-1 gap-6">
@@ -97,13 +83,25 @@ export function MdfeDadosForm({ onSubmit }: MdfeDadosFormProps) {
           <CardContent className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="cUF">Código da UF do Emitente</Label>
-              <Input
-                id="cUF"
+              <Select
                 name="cUF"
                 value={formData.cUF}
-                onChange={handleChange}
-                placeholder="Código da UF"
-              />
+                onValueChange={(value) => handleSelectChange("cUF", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a UF" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ufList.map((uf) => (
+                    <SelectItem
+                      key={uf.codigoIbge}
+                      value={uf.codigoIbge.toString() || ""}
+                    >
+                      {uf.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="tpEmit">Tipo de Emitente</Label>
@@ -262,9 +260,9 @@ export function MdfeDadosForm({ onSubmit }: MdfeDadosFormProps) {
                   <SelectValue placeholder="Selecione a UF" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ufs.map((uf) => (
-                    <SelectItem key={uf} value={uf}>
-                      {uf}
+                  {ufList.map((uf) => (
+                    <SelectItem key={`ini-${uf.id}`} value={uf.id}>
+                      {uf.id}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -281,9 +279,9 @@ export function MdfeDadosForm({ onSubmit }: MdfeDadosFormProps) {
                   <SelectValue placeholder="Selecione a UF" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ufs.map((uf) => (
-                    <SelectItem key={uf} value={uf}>
-                      {uf}
+                  {ufList.map((uf) => (
+                    <SelectItem key={`fim-${uf.id}`} value={uf.id}>
+                      {uf.id}
                     </SelectItem>
                   ))}
                 </SelectContent>

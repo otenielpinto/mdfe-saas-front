@@ -1,4 +1,4 @@
-"use server";
+//Nao usar o user server aqui
 
 // Lista de UFs do Brasil
 export const UF_DATA = [
@@ -137,7 +137,7 @@ export const UF_DATA = [
     descricao: "TOCANTINS",
     codigoIbge: 17,
   },
-];
+] as const;
 
 export async function getUf() {
   return UF_DATA;

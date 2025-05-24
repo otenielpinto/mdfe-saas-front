@@ -3,6 +3,8 @@
 import { TMongo } from "@/infra/mongoClient";
 import { ObjectId } from "mongodb";
 import { Motorista, MotoristaResponse } from "@/types/MotoristaTypes";
+import { getUser } from "./actSession";
+import { gen_id } from "./actGenerator";
 
 /**
  * Get all drivers
@@ -10,10 +12,30 @@ import { Motorista, MotoristaResponse } from "@/types/MotoristaTypes";
  */
 export async function getAllMotoristas(): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
+
+    // Build query with tenant and company filters
+    const query: any = {
+      id_tenant: Number(user.id_tenant),
+    };
+
+    // Add company filter if user has specific company access
+    if (user.id_empresa) {
+      query.id_empresa = Number(user.id_empresa);
+    }
+
     const motoristas = await clientdb
       .collection("mdfe_motorista")
-      .find()
+      .find(query)
       .toArray();
     await TMongo.mongoDisconnect(client);
 
@@ -39,10 +61,31 @@ export async function getAllMotoristas(): Promise<MotoristaResponse> {
  */
 export async function getMotoristaById(id: number): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
+
+    // Build query with tenant and company filters
+    const query: any = {
+      id: Number(id),
+      id_tenant: Number(user.id_tenant),
+    };
+
+    // Add company filter if user has specific company access
+    if (user.id_empresa) {
+      query.id_empresa = Number(user.id_empresa);
+    }
+
     const motorista = await clientdb
       .collection("mdfe_motorista")
-      .findOne({ id: Number(id) });
+      .findOne(query);
     await TMongo.mongoDisconnect(client);
 
     if (!motorista) {
@@ -77,10 +120,31 @@ export async function getMotoristaByObjectId(
   id: string
 ): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
+
+    // Build query with tenant and company filters
+    const query: any = {
+      _id: new ObjectId(id),
+      id_tenant: Number(user.id_tenant),
+    };
+
+    // Add company filter if user has specific company access
+    if (user.id_empresa) {
+      query.id_empresa = Number(user.id_empresa);
+    }
+
     const motorista = await clientdb
       .collection("mdfe_motorista")
-      .findOne({ _id: new ObjectId(id) });
+      .findOne(query);
     await TMongo.mongoDisconnect(client);
 
     if (!motorista) {
@@ -115,10 +179,31 @@ export async function getMotoristaByCpf(
   cpf: string
 ): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
+
+    // Build query with tenant and company filters
+    const query: any = {
+      CPF: cpf,
+      id_tenant: Number(user.id_tenant),
+    };
+
+    // Add company filter if user has specific company access
+    if (user.id_empresa) {
+      query.id_empresa = Number(user.id_empresa);
+    }
+
     const motorista = await clientdb
       .collection("mdfe_motorista")
-      .findOne({ CPF: cpf });
+      .findOne(query);
     await TMongo.mongoDisconnect(client);
 
     if (!motorista) {
@@ -153,6 +238,15 @@ export async function createMotorista(
   data: Motorista
 ): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Validate required fields
@@ -165,11 +259,15 @@ export async function createMotorista(
       };
     }
 
-    // Check if ID already exists
+    // Check if ID already exists within the tenant
     if (data.id) {
       const existingMotorista = await clientdb
         .collection("mdfe_motorista")
-        .findOne({ id: Number(data.id) });
+        .findOne({
+          id: Number(data.id),
+          id_tenant: Number(user.id_tenant),
+          id_empresa: Number(user.id_empresa),
+        });
 
       if (existingMotorista) {
         await TMongo.mongoDisconnect(client);
@@ -181,10 +279,13 @@ export async function createMotorista(
       }
     }
 
-    // Check if CPF already exists
+    // Check if CPF already exists within the tenant
     const existingMotorista = await clientdb
       .collection("mdfe_motorista")
-      .findOne({ CPF: data.CPF });
+      .findOne({
+        CPF: data.CPF,
+        id_tenant: Number(user.id_tenant),
+      });
 
     if (existingMotorista) {
       await TMongo.mongoDisconnect(client);
@@ -194,24 +295,28 @@ export async function createMotorista(
         error: "CPF_ALREADY_EXISTS",
       };
     }
+    let row = await gen_id("mdfe_motorista");
+    data.id = row.data as number;
 
-    // Add timestamps
-    const dataWithTimestamps = {
+    // Add timestamps and tenant/company information
+    const dataWithMetadata = {
       ...data,
+      id_tenant: Number(user.id_tenant),
+      id_empresa: user.id_empresa ? Number(user.id_empresa) : undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     const result = await clientdb
       .collection("mdfe_motorista")
-      .insertOne(dataWithTimestamps);
+      .insertOne(dataWithMetadata);
     await TMongo.mongoDisconnect(client);
 
     return {
       success: true,
       message: "Motorista criado com sucesso",
       data: {
-        ...dataWithTimestamps,
+        ...dataWithMetadata,
         _id: result.insertedId,
       } as Motorista,
     };
@@ -236,12 +341,32 @@ export async function updateMotorista(
   data: Partial<Motorista>
 ): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
 
-    // Check if driver exists
+    // Build query with tenant and company filters
+    const query: any = {
+      id: Number(id),
+      id_tenant: Number(user.id_tenant),
+    };
+
+    // Add company filter if user has specific company access
+    if (user.id_empresa) {
+      query.id_empresa = Number(user.id_empresa);
+    }
+
+    // Check if driver exists within the user's scope
     const existingMotorista = await clientdb
       .collection("mdfe_motorista")
-      .findOne({ id: Number(id) });
+      .findOne(query);
 
     if (!existingMotorista) {
       await TMongo.mongoDisconnect(client);
@@ -260,7 +385,7 @@ export async function updateMotorista(
 
     await clientdb
       .collection("mdfe_motorista")
-      .updateOne({ id: Number(id) }, { $set: dataWithTimestamp });
+      .updateOne(query, { $set: dataWithTimestamp });
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -292,12 +417,32 @@ export async function updateMotoristaByObjectId(
   data: Partial<Motorista>
 ): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
 
-    // Check if driver exists
+    // Build query with tenant and company filters
+    const query: any = {
+      _id: new ObjectId(id),
+      id_tenant: Number(user.id_tenant),
+    };
+
+    // Add company filter if user has specific company access
+    if (user.id_empresa) {
+      query.id_empresa = Number(user.id_empresa);
+    }
+
+    // Check if driver exists within the user's scope
     const existingMotorista = await clientdb
       .collection("mdfe_motorista")
-      .findOne({ _id: new ObjectId(id) });
+      .findOne(query);
 
     if (!existingMotorista) {
       await TMongo.mongoDisconnect(client);
@@ -316,7 +461,7 @@ export async function updateMotoristaByObjectId(
 
     await clientdb
       .collection("mdfe_motorista")
-      .updateOne({ _id: new ObjectId(id) }, { $set: dataWithTimestamp });
+      .updateOne(query, { $set: dataWithTimestamp });
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -344,12 +489,32 @@ export async function updateMotoristaByObjectId(
  */
 export async function deleteMotorista(id: number): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
 
-    // Check if driver exists
+    // Build query with tenant and company filters
+    const query: any = {
+      id: Number(id),
+      id_tenant: Number(user.id_tenant),
+    };
+
+    // Add company filter if user has specific company access
+    if (user.id_empresa) {
+      query.id_empresa = Number(user.id_empresa);
+    }
+
+    // Check if driver exists within the user's scope
     const existingMotorista = await clientdb
       .collection("mdfe_motorista")
-      .findOne({ id: Number(id) });
+      .findOne(query);
 
     if (!existingMotorista) {
       await TMongo.mongoDisconnect(client);
@@ -360,7 +525,7 @@ export async function deleteMotorista(id: number): Promise<MotoristaResponse> {
       };
     }
 
-    await clientdb.collection("mdfe_motorista").deleteOne({ id: Number(id) });
+    await clientdb.collection("mdfe_motorista").deleteOne(query);
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -387,12 +552,32 @@ export async function deleteMotoristaByObjectId(
   id: string
 ): Promise<MotoristaResponse> {
   try {
+    const user = await getUser();
+    if (!user?.id_tenant) {
+      return {
+        success: false,
+        message: "Usuário não autenticado ou sem tenant associado",
+        error: "UNAUTHORIZED",
+      };
+    }
+
     const { client, clientdb } = await TMongo.connectToDatabase();
 
-    // Check if driver exists
+    // Build query with tenant and company filters
+    const query: any = {
+      _id: new ObjectId(id),
+      id_tenant: Number(user.id_tenant),
+    };
+
+    // Add company filter if user has specific company access
+    if (user.id_empresa) {
+      query.id_empresa = Number(user.id_empresa);
+    }
+
+    // Check if driver exists within the user's scope
     const existingMotorista = await clientdb
       .collection("mdfe_motorista")
-      .findOne({ _id: new ObjectId(id) });
+      .findOne(query);
 
     if (!existingMotorista) {
       await TMongo.mongoDisconnect(client);
@@ -403,9 +588,7 @@ export async function deleteMotoristaByObjectId(
       };
     }
 
-    await clientdb
-      .collection("mdfe_motorista")
-      .deleteOne({ _id: new ObjectId(id) });
+    await clientdb.collection("mdfe_motorista").deleteOne(query);
     await TMongo.mongoDisconnect(client);
 
     return {

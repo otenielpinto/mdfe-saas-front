@@ -4,6 +4,8 @@
 export interface Motorista {
   _id?: any; // MongoDB ObjectId
   id?: number;
+  id_tenant?: number; // Tenant ID for multi-tenancy
+  id_empresa?: number; // Company ID
   xNome: string; // Nome do motorista (obrigatório)
   CPF: string; // CPF do motorista (obrigatório)
   CNH?: string; // CNH do motorista (obrigatório)

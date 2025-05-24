@@ -74,7 +74,7 @@ const data = {
       icon: Settings2,
       items: [
         {
-          title: "Empresa",
+          title: "Emitente",
           url: "/mdfe/emitentes",
         },
 

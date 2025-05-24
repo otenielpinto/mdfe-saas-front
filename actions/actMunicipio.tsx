@@ -50,8 +50,8 @@ export async function getMunicipioByUfAndDescricao(
 
   try {
     const municipio = await clientdb.collection("municipio").findOne({
-      uf: uf.toUpperCase(),
-      descricao: descricao,
+      uf: uf.toUpperCase().trim(),
+      descricao: descricao.toUpperCase().trim(),
     });
 
     return municipio;

@@ -26,15 +26,6 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils"; // Assumindo que utils.ts existe para cn
 
-// TODO: Adicionar validações mais robustas para CNPJ se necessário
-const cnpjValidation = (value: string | undefined) =>
-  !value || /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/.test(value);
-const cepValidation = (value: string) => /^\d{5}-\d{3}$/.test(value);
-const phoneValidation = (value: string | undefined) =>
-  !value ||
-  /^\(\d{2}\) \d{5}-\d{4}$/.test(value) ||
-  /^\(\d{2}\) \d{4}-\d{4}$/.test(value);
-
 const UFs = [
   "AC",
   "AL",
@@ -66,10 +57,7 @@ const UFs = [
 ] as const;
 
 const emitenteFormSchema = z.object({
-  CNPJ: z
-    .string()
-    .min(1, "CNPJ é obrigatório")
-    .refine(cnpjValidation, "CNPJ inválido"),
+  CNPJ: z.string().min(1, "CNPJ é obrigatório"),
   IE: z.string().min(1, "Inscrição Estadual é obrigatória"),
   xNome: z
     .string()
@@ -99,18 +87,10 @@ const emitenteFormSchema = z.object({
       .string()
       .min(1, "Município é obrigatório")
       .max(60, "Máximo de 60 caracteres"), // TODO: Melhorar validação/busca
-    CEP: z
-      .string()
-      .min(1, "CEP é obrigatório")
-      .refine(cepValidation, "CEP inválido (formato: 99999-999)"),
+    CEP: z.string().min(1, "CEP é obrigatório"),
+
     UF: z.enum(UFs, { required_error: "UF é obrigatória" }),
-    fone: z
-      .string()
-      .optional()
-      .refine(
-        phoneValidation,
-        "Telefone inválido (formato: (99) 99999-9999 ou (99) 9999-9999)"
-      ),
+    fone: z.string().optional(),
     email: z.string().email("Email inválido").optional().or(z.literal("")),
   }),
 });
@@ -122,33 +102,13 @@ interface MdfeEmitenteFormProps {
   initialData?: EmitenteFormValues;
 }
 
-// Valores padrão com dados fake para teste
-const defaultValues: Partial<EmitenteFormValues> = {
-  CNPJ: "12.345.678/0001-99",
-  IE: "123.456.789",
-  xNome: "Transportadora Fake Ltda",
-  xFant: "TransFake",
-  enderEmit: {
-    xLgr: "Rua das Flores",
-    nro: "123",
-    xCpl: "Sala 45",
-    xBairro: "Centro",
-    cMun: "3550308", // Código IBGE de São Paulo
-    xMun: "São Paulo",
-    CEP: "01001-000",
-    UF: "SP",
-    fone: "(11) 98765-4321",
-    email: "contato@transfake.com.br",
-  },
-};
-
 export function MdfeEmitenteForm({
   onSubmit,
   initialData,
 }: MdfeEmitenteFormProps) {
   const form = useForm<EmitenteFormValues>({
     resolver: zodResolver(emitenteFormSchema),
-    defaultValues: initialData || defaultValues,
+    defaultValues: initialData,
     mode: "onChange", // ou "onBlur"
   });
 
@@ -430,9 +390,7 @@ export function MdfeEmitenteForm({
         </Card>
 
         <div className="flex justify-end mt-4">
-          <Button type="submit">
-            Continuar
-          </Button>
+          <Button type="submit">Continuar</Button>
         </div>
       </form>
     </Form>

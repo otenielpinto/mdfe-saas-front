@@ -6,7 +6,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useRouter, useParams } from "next/navigation";
 import { Motorista } from "@/types/MotoristaTypes";
-import { getMotoristaById, updateMotorista } from "@/actions/actMotorista";
+import {
+  getMotoristaByObjectId,
+  updateMotoristaByObjectId,
+} from "@/actions/actMotorista";
 import { useToast } from "@/components/ui/use-toast";
 
 import {
@@ -26,20 +29,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 
 // Schema for form validation (same as new page)
 const motoristaFormSchema = z.object({
   xNome: z.string().min(1, "Nome é obrigatório"),
-  CPF: z.string()
+  CPF: z
+    .string()
     .min(11, "CPF deve ter 11 dígitos")
     .max(11, "CPF deve ter 11 dígitos")
     .regex(/^\d+$/, "CPF deve conter apenas números"),
-  CNH: z.string()
-    .min(11, "CNH deve ter 11 dígitos")
-    .max(11, "CNH deve ter 11 dígitos")
-    .regex(/^\d+$/, "CNH deve conter apenas números"),
+  CNH: z.string().max(11, "CNH deve ter 11 dígitos").optional(),
   status: z.string().optional(),
   telefone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -72,8 +79,8 @@ export default function MotoristaEditPage() {
   useEffect(() => {
     const fetchMotorista = async () => {
       try {
-        const response = await getMotoristaById(Number(params.id));
-        
+        const response: any = await getMotoristaByObjectId(params.id as string);
+
         if (response.success && response.data) {
           form.reset({
             xNome: response.data.xNome,
@@ -111,7 +118,10 @@ export default function MotoristaEditPage() {
   async function onSubmit(data: MotoristaFormValues) {
     setIsSubmitting(true);
     try {
-      const response = await updateMotorista(Number(params.id), data);
+      const response: any = await updateMotoristaByObjectId(
+        params.id as string,
+        data
+      );
 
       if (response.success) {
         toast({
@@ -238,7 +248,10 @@ export default function MotoristaEditPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o status" />
