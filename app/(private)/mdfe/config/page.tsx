@@ -1,35 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, X, Save } from "lucide-react";
+import { Plus, X, Save, Loader2 } from "lucide-react";
 import Link from "next/link";
-
-interface MunCarrega {
-  cMunCarrega: string;
-  xMunCarrega: string;
-}
-
-interface Percurso {
-  UFPer: string;
-}
-
-interface MdfeConfigData {
-  cUF: string;
-  tpAmb: string;
-  tpEmit: string;
-  tpTransp: string;
-  mod: string;
-  serie: string;
-  modal: string;
-  UFIni: string;
-  UFFim: string;
-  infMunCarrega: MunCarrega[];
-  infPercurso: Percurso[];
-}
+import { MdfeConfigData, MunCarrega, Percurso } from "@/types/MdfeConfigTypes";
+import { getMdfeConfig, saveMdfeConfig } from "@/actions/actMdfeConfig";
+import { useToast } from "@/hooks/use-toast";
 
 export default function MdfeConfigPage() {
   const [formData, setFormData] = useState<MdfeConfigData>({
@@ -44,6 +25,100 @@ export default function MdfeConfigPage() {
     UFFim: "",
     infMunCarrega: [{ cMunCarrega: "", xMunCarrega: "" }],
     infPercurso: [{ UFPer: "" }],
+  });
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // React Query para carregar configuração
+  const {
+    data: configResponse,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["mdfe-config"],
+    queryFn: getMdfeConfig,
+  });
+
+  // Effect para processar dados quando a query é bem-sucedida
+  useEffect(() => {
+    if (configResponse?.success && configResponse.data) {
+      // Mapear os dados retornados para o formato do formulário
+      const config = configResponse.data;
+      setFormData({
+        cUF: config.cUF?.toString() || "",
+        tpAmb: config.tpAmb?.toString() || "",
+        tpEmit: config.tpEmit?.toString() || "",
+        tpTransp: config.tpTransp?.toString() || "",
+        mod: config.mod?.toString() || "58",
+        serie: config.serie?.toString() || "",
+        modal: config.modal?.toString() || "",
+        UFIni: config.UFIni || "",
+        UFFim: config.UFFim || "",
+        infMunCarrega:
+          config.infMunCarrega && config.infMunCarrega.length > 0
+            ? config.infMunCarrega
+            : [{ cMunCarrega: "", xMunCarrega: "" }],
+        infPercurso:
+          config.infPercurso && config.infPercurso.length > 0
+            ? config.infPercurso
+            : [{ UFPer: "" }],
+      });
+
+      toast({
+        title: "Configuração carregada",
+        description: "Os dados da configuração foram carregados com sucesso.",
+      });
+    } else if (configResponse?.success === false) {
+      // Se não há configuração, usar valores padrão
+      toast({
+        title: "Nova configuração",
+        description: "Nenhuma configuração encontrada. Criando uma nova.",
+        variant: "default",
+      });
+    }
+  }, [configResponse, toast]);
+
+  // Effect para tratar erros da query
+  useEffect(() => {
+    if (isError && error) {
+      console.error("Erro ao carregar configuração:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar a configuração.",
+        variant: "destructive",
+      });
+    }
+  }, [isError, error, toast]);
+
+  // React Query para salvar configuração
+  const saveMutation = useMutation({
+    mutationFn: saveMdfeConfig,
+    onSuccess: (response) => {
+      if (response.success) {
+        toast({
+          title: "Sucesso",
+          description: "Configuração salva com sucesso!",
+        });
+        // Invalidar e recarregar os dados
+        queryClient.invalidateQueries({ queryKey: ["mdfe-config"] });
+      } else {
+        toast({
+          title: "Erro",
+          description: response.message || "Erro ao salvar configuração.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error) => {
+      console.error("Erro ao salvar:", error);
+      toast({
+        title: "Erro",
+        description: "Erro interno ao salvar configuração.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleInputChange = (field: keyof MdfeConfigData, value: string) => {
@@ -102,11 +177,55 @@ export default function MdfeConfigPage() {
     }
   };
 
-  const handleSave = () => {
-    console.log("Dados do formulário:", formData);
-    // Aqui seria implementada a lógica de salvamento
-    alert("Configuração salva com sucesso!");
+  const handleSave = async () => {
+    // Preparar dados para salvar
+    const dataToSave = {
+      cUF: Number(formData.cUF) || 0,
+      tpAmb: Number(formData.tpAmb) || 0,
+      tpEmit: Number(formData.tpEmit) || 0,
+      tpTransp: Number(formData.tpTransp) || 0,
+      mod: Number(formData.mod) || 58,
+      serie: Number(formData.serie) || 0,
+      modal: Number(formData.modal) || 0,
+      UFIni: formData.UFIni,
+      UFFim: formData.UFFim,
+      infMunCarrega: formData.infMunCarrega.filter(
+        (m) => m.cMunCarrega && m.xMunCarrega
+      ),
+      infPercurso: formData.infPercurso.filter((p) => p.UFPer),
+    };
+
+    saveMutation.mutate(dataToSave);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Carregando configuração...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <div className="text-red-600">Erro ao carregar configuração</div>
+          <Button
+            onClick={() =>
+              queryClient.invalidateQueries({ queryKey: ["mdfe-config"] })
+            }
+            variant="outline"
+          >
+            Tentar novamente
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -140,7 +259,7 @@ export default function MdfeConfigPage() {
                     id="cUF"
                     value={formData.cUF}
                     onChange={(e) => handleInputChange("cUF", e.target.value)}
-                    placeholder="Ex: 35 (São Paulo)"
+                    placeholder="Ex: 43 (Rio Grande do Sul)"
                   />
                 </div>
 
@@ -220,7 +339,7 @@ export default function MdfeConfigPage() {
                     id="UFIni"
                     value={formData.UFIni}
                     onChange={(e) => handleInputChange("UFIni", e.target.value)}
-                    placeholder="Ex: SP"
+                    placeholder="Ex: RS"
                     maxLength={2}
                   />
                 </div>
@@ -231,7 +350,7 @@ export default function MdfeConfigPage() {
                     id="UFFim"
                     value={formData.UFFim}
                     onChange={(e) => handleInputChange("UFFim", e.target.value)}
-                    placeholder="Ex: RJ"
+                    placeholder="Ex: RS"
                     maxLength={2}
                   />
                 </div>
@@ -348,7 +467,7 @@ export default function MdfeConfigPage() {
                       onChange={(e) =>
                         handlePercursoChange(index, e.target.value)
                       }
-                      placeholder="Ex: MG"
+                      placeholder="Ex: RS"
                       maxLength={2}
                     />
                   </div>
@@ -376,10 +495,20 @@ export default function MdfeConfigPage() {
           <Button
             type="button"
             onClick={handleSave}
+            disabled={saveMutation.isPending}
             className="bg-green-600 hover:bg-green-700"
           >
-            <Save className="h-4 w-4 mr-2" />
-            Salvar Configuração
+            {saveMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Salvar Configuração
+              </>
+            )}
           </Button>
         </div>
       </form>
