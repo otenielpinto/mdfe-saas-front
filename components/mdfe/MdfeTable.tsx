@@ -111,11 +111,22 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
       case "ENVIADO":
         return <Badge variant="secondary">Enviado</Badge>;
       case "AUTORIZADO":
-        return <Badge variant="default" className="bg-green-500 hover:bg-green-600">Autorizado</Badge>;
+        return (
+          <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+            Autorizado
+          </Badge>
+        );
       case "REJEITADO":
         return <Badge variant="destructive">Rejeitado</Badge>;
       case "CANCELADO":
-        return <Badge variant="destructive" className="bg-yellow-500 hover:bg-yellow-600">Cancelado</Badge>;
+        return (
+          <Badge
+            variant="destructive"
+            className="bg-yellow-500 hover:bg-yellow-600"
+          >
+            Cancelado
+          </Badge>
+        );
       case "ENCERRADO":
         return <Badge variant="default">Encerrado</Badge>;
       default:
@@ -169,17 +180,12 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
                   <TableCell>
                     {mdfe.infMDFe?.ide?.serie && mdfe.infMDFe.ide.nMDF
                       ? `${mdfe.infMDFe.ide.serie}/${mdfe.infMDFe.ide.nMDF}`
-                      : 'N/A'}
+                      : "N/A"}
                   </TableCell>
-                  <TableCell>
-                    {mdfe.infMDFe?.emit?.xNome || 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {mdfe.infMDFe?.ide?.UFIni || 'N/A'}
-                  </TableCell>
-                  <TableCell>
-                    {mdfe.infMDFe?.ide?.UFFim || 'N/A'}
-                  </TableCell>
+                  <TableCell>{mdfe.infMDFe?.emit?.xNome || "N/A"}</TableCell>
+                  <TableCell>{mdfe.infMDFe?.ide?.UFIni || "N/A"}</TableCell>
+                  <TableCell>{mdfe.infMDFe?.ide?.UFFim || "N/A"}</TableCell>
+
                   <TableCell>{getStatusBadge(mdfe.status)}</TableCell>
                   <TableCell>{formatDate(mdfe.createdAt)}</TableCell>
                   <TableCell className="text-right">
@@ -242,9 +248,10 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o MDF-e{" "}
-              {selectedMdfe?.infMDFe?.ide?.serie && selectedMdfe.infMDFe.ide.nMDF
+              {selectedMdfe?.infMDFe?.ide?.serie &&
+              selectedMdfe.infMDFe.ide.nMDF
                 ? `${selectedMdfe.infMDFe.ide.serie}/${selectedMdfe.infMDFe.ide.nMDF}`
-                : selectedMdfe?.id || 'selecionado'}
+                : selectedMdfe?.id || "selecionado"}
               ? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -25,6 +25,18 @@ export default function MdfeConfigPage() {
     UFFim: "",
     infMunCarrega: [{ cMunCarrega: "", xMunCarrega: "" }],
     infPercurso: [{ UFPer: "" }],
+    // Campos do veículo
+    codigoAgregacao: "",
+    placaVeiculo: "",
+    renavam: "",
+    tara: "",
+    capacidadeKG: "",
+    capacidadeM3: "",
+    tpCar: "01",
+    tpRod: "01",
+    // Campos do motorista
+    xNome: "",
+    cpf: "",
   });
 
   const { toast } = useToast();
@@ -64,6 +76,19 @@ export default function MdfeConfigPage() {
           config.infPercurso && config.infPercurso.length > 0
             ? config.infPercurso
             : [{ UFPer: "" }],
+
+        // Campos do veículo
+        codigoAgregacao: config.codigoAgregacao || "",
+        placaVeiculo: config.placaVeiculo || "",
+        renavam: config.renavam || "",
+        tara: config.tara?.toString() || "",
+        capacidadeKG: config.capacidadeKG?.toString() || "",
+        capacidadeM3: config.capacidadeM3?.toString() || "",
+        tpCar: config.tpCar,
+        tpRod: config.tpRod,
+        // Campos do motorista
+        xNome: config.xNome || "",
+        cpf: config.cpf || "",
       });
 
       toast({
@@ -193,6 +218,18 @@ export default function MdfeConfigPage() {
         (m) => m.cMunCarrega && m.xMunCarrega
       ),
       infPercurso: formData.infPercurso.filter((p) => p.UFPer),
+      // Campos do veículo
+      codigoAgregacao: formData.codigoAgregacao,
+      placaVeiculo: formData.placaVeiculo,
+      renavam: formData.renavam,
+      tara: Number(formData.tara) || 0,
+      capacidadeKG: Number(formData.capacidadeKG) || 0,
+      capacidadeM3: Number(formData.capacidadeM3) || 0,
+      tpCar: formData.tpCar,
+      tpRod: formData.tpRod,
+      // Campos do motorista
+      xNome: formData.xNome,
+      cpf: formData.cpf,
     };
 
     saveMutation.mutate(dataToSave);
@@ -486,6 +523,157 @@ export default function MdfeConfigPage() {
                   )}
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dados do Veículo */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Dados do Veículo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Coluna 1 */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="codigoAgregacao">Código de Agregação</Label>
+                  <Input
+                    id="codigoAgregacao"
+                    value={formData.codigoAgregacao}
+                    onChange={(e) =>
+                      handleInputChange("codigoAgregacao", e.target.value)
+                    }
+                    placeholder="Código de agregação do veículo"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="placaVeiculo">Placa do Veículo</Label>
+                  <Input
+                    id="placaVeiculo"
+                    value={formData.placaVeiculo}
+                    onChange={(e) =>
+                      handleInputChange("placaVeiculo", e.target.value)
+                    }
+                    placeholder="Ex: ABC1234"
+                    maxLength={7}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="renavam">RENAVAM</Label>
+                  <Input
+                    id="renavam"
+                    value={formData.renavam}
+                    onChange={(e) =>
+                      handleInputChange("renavam", e.target.value)
+                    }
+                    placeholder="Número do RENAVAM"
+                    maxLength={11}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="tara">Tara (kg)</Label>
+                  <Input
+                    id="tara"
+                    type="number"
+                    value={formData.tara}
+                    onChange={(e) => handleInputChange("tara", e.target.value)}
+                    placeholder="Peso do veículo vazio em kg"
+                  />
+                </div>
+              </div>
+
+              {/* Coluna 2 */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="capacidadeKG">Capacidade de Carga (kg)</Label>
+                  <Input
+                    id="capacidadeKG"
+                    type="number"
+                    value={formData.capacidadeKG}
+                    onChange={(e) =>
+                      handleInputChange("capacidadeKG", e.target.value)
+                    }
+                    placeholder="Capacidade em quilogramas"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="capacidadeM3">Capacidade de Carga (m³)</Label>
+                  <Input
+                    id="capacidadeM3"
+                    type="number"
+                    step="0.01"
+                    value={formData.capacidadeM3}
+                    onChange={(e) =>
+                      handleInputChange("capacidadeM3", e.target.value)
+                    }
+                    placeholder="Capacidade em metros cúbicos"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="tpCar">Tipo de Carroceria</Label>
+                  <Input
+                    id="tpCar"
+                    value={formData.tpCar}
+                    onChange={(e) => handleInputChange("tpCar", e.target.value)}
+                    placeholder="Código do tipo de carroceria"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ex: 00-Não aplicável, 01-Aberta, 02-Fechada/Baú,
+                    03-Graneleira, 04-Porta Container, 05-Sider
+                  </p>
+                </div>
+
+                <div>
+                  <Label htmlFor="tpRod">Tipo de Rodado</Label>
+                  <Input
+                    id="tpRod"
+                    value={formData.tpRod}
+                    onChange={(e) => handleInputChange("tpRod", e.target.value)}
+                    placeholder="Código do tipo de rodado"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Ex: 01-Truck, 02- Toco, 03-Cavalo Mecânico, 04-VAN,
+                    05-Utilitário, 06-Outros.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Dados do Motorista */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Dados do Motorista</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="xNome">Nome do Motorista</Label>
+                <Input
+                  id="xNome"
+                  value={formData.xNome}
+                  onChange={(e) => handleInputChange("xNome", e.target.value)}
+                  placeholder="Nome completo do motorista"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="cpf">CPF do Motorista</Label>
+                <Input
+                  id="cpf"
+                  value={formData.cpf}
+                  onChange={(e) => handleInputChange("cpf", e.target.value)}
+                  placeholder="Digite o CPF do motorista"
+                  maxLength={11}
+                />
+              </div>
             </div>
           </CardContent>
         </Card>

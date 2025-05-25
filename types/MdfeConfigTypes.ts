@@ -19,6 +19,18 @@ export interface MdfeConfigData {
   UFFim: string;
   infMunCarrega: MunCarrega[];
   infPercurso: Percurso[];
+  // Campos do veículo
+  codigoAgregacao: string;
+  placaVeiculo: string;
+  renavam: string;
+  tara: string;
+  capacidadeKG: string;
+  capacidadeM3: string;
+  tpCar: string;
+  tpRod: string;
+  // Campos do motorista
+  xNome: string;
+  cpf: string;
 }
 
 // Mock data for MDFe
