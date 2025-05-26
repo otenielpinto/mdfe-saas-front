@@ -21,25 +21,27 @@ interface MdfeDadosFormProps {
 
 export function MdfeDadosForm({ onSubmit, initialData }: MdfeDadosFormProps) {
   const [formData, setFormData] = useState({
-    cUF: "", // Código da UF do emitente do Documento Fiscal
-    tpEmit: "1",
-    tpTransp: "1", // Tipo do Transportador
-    tpAmb: "2",
-    tpEmis: "1",
-    mod: "58",
-    serie: "1",
-    numero: "", // equivalente a nMDF no schema
-    cMDF: "", // Tipo do Documento Fiscal
-    cDV: "", // Dígito Verificador
+    cUF: initialData?.cUF || "", // Código da UF do emitente do Documento Fiscal
+    tpEmit: initialData?.tpEmit || "1", // Tipo de Emitente
+    tpTransp: initialData?.tpTransp || "1", // Tipo do Transportador
+    tpAmb: initialData?.tpAmb || "1", // Ambiente: 1 - Produção, 2 - Homologação
+    tpEmis: initialData?.tpEmis || "1", // Tipo de Emissão: 1 - Normal, 2 - Contingência
+    mod: initialData?.mod || "58", // Modelo do Documento Fiscal (MDF-e)
+    serie: initialData?.serie || "1",
+    numero: initialData?.numero || "", // equivalente a nMDF no schema
+    cMDF: initialData?.cMDF || "", // Tipo do Documento Fiscal
+    cDV: initialData?.cDV || "", // Dígito Verificador
     dhEmi: new Date().toISOString().split("T")[0],
-    tpModal: "1", // equivalente a modal no schema
-    ufIni: "", // equivalente a UFIni no schema
-    ufFim: "", // equivalente a UFFim no schema
-    dhIniViagem: "", // Data e hora previstas de início da Viagem
-    indCanalVerde: false, // Indicador de participação do Canal Verde
-    indCarregaPosterior: false,
-    infMunCarrega: [{ cMunCarrega: "", xMunCarrega: "" }],
-    infPercurso: "",
+    tpModal: initialData?.tpModal || "1", // equivalente a modal no schema
+    ufIni: initialData?.ufIni || "", // equivalente a UFIni no schema
+    ufFim: initialData?.ufFim || "", // equivalente a UFFim no schema
+    dhIniViagem: initialData?.dhIniViagem || "", // Data e hora previstas de início da Viagem
+    indCanalVerde: initialData?.indCanalVerde || false, // Indicador de participação do Canal Verde
+    indCarregaPosterior: initialData?.indCarregaPosterior || false,
+    infMunCarrega: initialData?.infMunCarrega || [
+      { cMunCarrega: "", xMunCarrega: "" },
+    ],
+    infPercurso: initialData?.infPercurso || "",
   });
 
   // Atualizar formData quando initialData mudar

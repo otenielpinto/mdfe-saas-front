@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +15,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface MdfeDocumentosFormProps {
   onSubmit: (data: any) => void;
+  initialData?: {
+    nfe?: Documento[];
+    cte?: Documento[];
+    mdf?: Documento[];
+    municipioCarregamento?: string;
+    municipioDescarregamento?: string;
+  };
 }
 
 interface Documento {
@@ -27,16 +34,19 @@ interface Documento {
   municipioDescarregamento: string;
 }
 
-export function MdfeDocumentosForm({ onSubmit }: MdfeDocumentosFormProps) {
+export function MdfeDocumentosForm({
+  onSubmit,
+  initialData,
+}: MdfeDocumentosFormProps) {
   const [activeTab, setActiveTab] = useState("nfe");
   const [documentos, setDocumentos] = useState<{
     nfe: Documento[];
     cte: Documento[];
     mdf: Documento[];
   }>({
-    nfe: [],
-    cte: [],
-    mdf: [],
+    nfe: initialData?.nfe || [],
+    cte: initialData?.cte || [],
+    mdf: initialData?.mdf || [],
   });
 
   const [novoDocumento, setNovoDocumento] = useState<Documento>({
@@ -45,9 +55,26 @@ export function MdfeDocumentosForm({ onSubmit }: MdfeDocumentosFormProps) {
     indReentrega: false,
     pesoTotal: "",
     valor: "",
-    municipioCarregamento: "",
-    municipioDescarregamento: "",
+    municipioCarregamento: initialData?.municipioCarregamento || "",
+    municipioDescarregamento: initialData?.municipioDescarregamento || "",
   });
+
+  // Update state when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      setDocumentos({
+        nfe: initialData.nfe || [],
+        cte: initialData.cte || [],
+        mdf: initialData.mdf || [],
+      });
+
+      setNovoDocumento((prev) => ({
+        ...prev,
+        municipioCarregamento: initialData.municipioCarregamento || "",
+        municipioDescarregamento: initialData.municipioDescarregamento || "",
+      }));
+    }
+  }, [initialData]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;

@@ -26,7 +26,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getUser } from "@/hooks/useUser";
 import { getUserEmpresas } from "@/actions/actUser";
 

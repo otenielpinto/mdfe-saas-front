@@ -31,6 +31,9 @@ export interface MdfeConfigData {
   // Campos do motorista
   xNome: string;
   cpf: string;
+  //dados dos documentos
+  municipioCarregamento: string;
+  municipioDescarregamento: string;
 }
 
 // Mock data for MDFe

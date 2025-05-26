@@ -27,9 +27,8 @@ const steps = [
 
 export default function NewMdfePage() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState<any>({});
   const [isLoading, setIsLoading] = useState(true);
-
   const { toast } = useToast();
 
   // Carregar dados de configuração padrão ao inicializar
@@ -37,14 +36,17 @@ export default function NewMdfePage() {
     const loadDefaultConfig = async () => {
       try {
         setIsLoading(true);
-        const configResponse = await getMdfeConfig();
-        const emitenteResponse = await getAllMdfeEmitentes();
+
+        let [configResponse, emitenteResponse] = await Promise.all([
+          getMdfeConfig(),
+          getAllMdfeEmitentes(),
+        ]);
 
         if (configResponse.success && configResponse.data) {
           const config = configResponse.data;
 
           // Mapear dados de configuração para o formato do formulário
-          const defaultFormData = {
+          const defaultFormData: any = {
             dados: {
               cUF: config.cUF?.toString() || "",
               tpEmit: config.tpEmit?.toString() || "1",
@@ -86,6 +88,11 @@ export default function NewMdfePage() {
                 { xNome: config.xNome || "", cpf: config.cpf || "" },
               ],
             },
+            informacoes_dos_documentos: {
+              municipioCarregamento: config.municipioCarregamento || "",
+              municipioDescarregamento: config.municipioDescarregamento || "",
+            },
+            informacoes_adicionais: {},
           };
 
           // Se houver emitentes disponíveis, preencher com o primeiro emitente
@@ -127,12 +134,13 @@ export default function NewMdfePage() {
                 "Dados padrão do MDFe foram carregados. Nenhum emitente encontrado.",
             });
           }
-
           setFormData(defaultFormData);
+
+          console.log("Configuração padrão carregada:", defaultFormData);
         } else {
           console.log("Nenhuma configuração encontrada, usando valores padrão");
           // Definir valores padrão mínimos se não houver configuração
-          const defaultFormData = {
+          const defaultFormData: any = {
             dados: {
               cUF: "",
               tpEmit: "1",
@@ -198,36 +206,13 @@ export default function NewMdfePage() {
             "Erro ao carregar configuração padrão. Usando valores padrão.",
           variant: "destructive",
         });
-
-        // Usar valores padrão em caso de erro
-        setFormData({
-          dados: {
-            cUF: "",
-            tpEmit: "1",
-            tpTransp: "1",
-            tpAmb: "2",
-            tpEmis: "1",
-            mod: "58",
-            serie: "1",
-            numero: "",
-            cMDF: "",
-            cDV: "",
-            dhEmi: new Date().toISOString().split("T")[0],
-            tpModal: "1",
-            ufIni: "",
-            ufFim: "",
-            dhIniViagem: "",
-            infMunCarrega: [{ cMunCarrega: "", xMunCarrega: "" }],
-            infPercurso: "",
-          },
-        });
       } finally {
         setIsLoading(false);
       }
     };
 
     loadDefaultConfig();
-  }, [toast]);
+  }, []);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -243,7 +228,8 @@ export default function NewMdfePage() {
 
   const handleSubmitStep = (stepData: any) => {
     const stepName = steps[currentStep].toLowerCase().replace(/ /g, "_");
-    setFormData((prev) => ({ ...prev, [stepName]: stepData }));
+    setFormData((prev: any) => ({ ...prev, [stepName]: stepData }));
+    console.log(`Dados do passo "${steps[currentStep]}":`, stepData);
 
     if (currentStep < steps.length - 1) {
       handleNext();
@@ -257,7 +243,8 @@ export default function NewMdfePage() {
   };
 
   const handleEmit = async () => {
-    setFormData({});
+    console.log("Emitindo MDF-e com os seguintes dados:", formData);
+    // setFormData({});
     toast({
       title: "MDF-e Emitido",
       description: "O MDF-e foi emitido com sucesso e o rascunho foi removido.",
@@ -338,7 +325,10 @@ export default function NewMdfePage() {
               <MdfeAquaviarioForm onSubmit={handleSubmitStep} />
             )}
             {currentStep === 4 && (
-              <MdfeDocumentosForm onSubmit={handleSubmitStep} />
+              <MdfeDocumentosForm
+                onSubmit={handleSubmitStep}
+                initialData={formData?.informacoes_dos_documentos || {}}
+              />
             )}
             {currentStep === 5 && (
               <MdfeTotalizadoresForm onSubmit={handleSubmitStep} />
