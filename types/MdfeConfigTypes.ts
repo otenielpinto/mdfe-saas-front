@@ -190,7 +190,7 @@ export const mockMdfeData =
             condutor: [
               {
                 xNome: "string",
-                CPF: "string",
+                cpf: "string",
               },
             ],
             tpRod: "string",
@@ -451,3 +451,22 @@ export const mockMdfeData =
     ambiente: "homologacao",
     referencia: "string",
   };
+
+// Interface for conductor data
+export interface Condutor {
+  xNome: string;
+  cpf: string;
+}
+
+// Interface for form data
+export interface MdfeRodoviarioFormData {
+  codigoAgregacao: string;
+  placaVeiculo: string;
+  renavam: string;
+  tara: string;
+  capacidadeKG: string;
+  capacidadeM3: string;
+  tpCar: string;
+  tpRod: string;
+  condutores: Condutor[];
+}

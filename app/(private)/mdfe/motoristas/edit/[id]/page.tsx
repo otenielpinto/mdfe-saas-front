@@ -41,12 +41,12 @@ import { Loader2 } from "lucide-react";
 // Schema for form validation (same as new page)
 const motoristaFormSchema = z.object({
   xNome: z.string().min(1, "Nome é obrigatório"),
-  CPF: z
+  cpf: z
     .string()
-    .min(11, "CPF deve ter 11 dígitos")
-    .max(11, "CPF deve ter 11 dígitos")
-    .regex(/^\d+$/, "CPF deve conter apenas números"),
-  CNH: z.string().max(11, "CNH deve ter 11 dígitos").optional(),
+    .min(11, "cpf deve ter 11 dígitos")
+    .max(11, "cpf deve ter 11 dígitos")
+    .regex(/^\d+$/, "cpf deve conter apenas números"),
+  cnh: z.string().max(11, "cnh deve ter 11 dígitos").optional(),
   status: z.string().optional(),
   telefone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -67,8 +67,8 @@ export default function MotoristaEditPage() {
     resolver: zodResolver(motoristaFormSchema),
     defaultValues: {
       xNome: "",
-      CPF: "",
-      CNH: "",
+      cpf: "",
+      cnh: "",
       status: "Ativo",
       telefone: "",
       email: "",
@@ -84,8 +84,8 @@ export default function MotoristaEditPage() {
         if (response.success && response.data) {
           form.reset({
             xNome: response.data.xNome,
-            CPF: response.data.CPF,
-            CNH: response.data.CNH,
+            cpf: response.data.cpf,
+            cnh: response.data.cnh,
             status: response.data.status || "Ativo",
             telefone: response.data.telefone || "",
             email: response.data.email || "",
@@ -203,16 +203,16 @@ export default function MotoristaEditPage() {
                 )}
               />
 
-              {/* CPF */}
+              {/* cpf */}
               <FormField
                 control={form.control}
-                name="CPF"
+                name="cpf"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CPF</FormLabel>
+                    <FormLabel>cpf</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="CPF (apenas números)"
+                        placeholder="cpf (apenas números)"
                         autoComplete="off"
                         {...field}
                       />
@@ -222,16 +222,16 @@ export default function MotoristaEditPage() {
                 )}
               />
 
-              {/* CNH */}
+              {/* cnh */}
               <FormField
                 control={form.control}
-                name="CNH"
+                name="cnh"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CNH</FormLabel>
+                    <FormLabel>cnh</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="CNH (apenas números)"
+                        placeholder="cnh (apenas números)"
                         autoComplete="off"
                         {...field}
                       />

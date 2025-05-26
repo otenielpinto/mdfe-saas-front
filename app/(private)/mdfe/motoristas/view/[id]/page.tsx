@@ -117,11 +117,11 @@ export default function MotoristaView() {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">CPF</p>
-              <p>{motorista?.CPF || "Não informado"}</p>
+              <p>{motorista?.cpf || "Não informado"}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">CNH</p>
-              <p>{motorista?.CNH || "Não informado"}</p>
+              <p>{motorista?.cnh || "Não informado"}</p>
             </div>
           </div>
         </div>

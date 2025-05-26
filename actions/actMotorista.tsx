@@ -171,11 +171,11 @@ export async function getMotoristaByObjectId(
 }
 
 /**
- * Get driver by CPF
- * @param cpf CPF number
+ * Get driver by cpf
+ * @param cpf cpf number
  * @returns Response with driver object
  */
-export async function getMotoristaByCpf(
+export async function getMotoristaBycpf(
   cpf: string
 ): Promise<MotoristaResponse> {
   try {
@@ -192,7 +192,7 @@ export async function getMotoristaByCpf(
 
     // Build query with tenant and company filters
     const query: any = {
-      CPF: cpf,
+      cpf: cpf,
       id_tenant: Number(user.id_tenant),
     };
 
@@ -220,7 +220,7 @@ export async function getMotoristaByCpf(
       data: motorista as Motorista,
     };
   } catch (error) {
-    console.error(`Erro ao buscar motorista com CPF ${cpf}:`, error);
+    console.error(`Erro ao buscar motorista com cpf ${cpf}:`, error);
     return {
       success: false,
       message: "Erro ao buscar motorista",
@@ -250,11 +250,11 @@ export async function createMotorista(
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Validate required fields
-    if (!data.xNome || !data.CPF) {
+    if (!data.xNome || !data.cpf) {
       await TMongo.mongoDisconnect(client);
       return {
         success: false,
-        message: "Nome e CPF são obrigatórios",
+        message: "Nome e cpf são obrigatórios",
         error: "MISSING_REQUIRED_FIELDS",
       };
     }
@@ -279,11 +279,11 @@ export async function createMotorista(
       }
     }
 
-    // Check if CPF already exists within the tenant
+    // Check if cpf already exists within the tenant
     const existingMotorista = await clientdb
       .collection("mdfe_motorista")
       .findOne({
-        CPF: data.CPF,
+        cpf: data.cpf,
         id_tenant: Number(user.id_tenant),
       });
 
@@ -291,8 +291,8 @@ export async function createMotorista(
       await TMongo.mongoDisconnect(client);
       return {
         success: false,
-        message: "Já existe um motorista com este CPF",
-        error: "CPF_ALREADY_EXISTS",
+        message: "Já existe um motorista com este cpf",
+        error: "cpf_ALREADY_EXISTS",
       };
     }
     let row = await gen_id("mdfe_motorista");

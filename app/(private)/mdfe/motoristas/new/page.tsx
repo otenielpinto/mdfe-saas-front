@@ -38,12 +38,12 @@ import { Loader2 } from "lucide-react";
 // Schema for form validation
 const motoristaFormSchema = z.object({
   xNome: z.string().min(1, "Nome é obrigatório"),
-  CPF: z
+  cpf: z
     .string()
-    .min(11, "CPF deve ter 11 dígitos")
-    .max(11, "CPF deve ter 11 dígitos")
-    .regex(/^\d+$/, "CPF deve conter apenas números"),
-  CNH: z.string().optional(),
+    .min(11, "cpf deve ter 11 dígitos")
+    .max(11, "cpf deve ter 11 dígitos")
+    .regex(/^\d+$/, "cpf deve conter apenas números"),
+  cnh: z.string().optional(),
   status: z.string().optional(),
   telefone: z.string().optional(),
   email: z.string().email("Email inválido").optional().or(z.literal("")),
@@ -61,8 +61,8 @@ export default function MotoristaNewPage() {
     resolver: zodResolver(motoristaFormSchema),
     defaultValues: {
       xNome: "",
-      CPF: "",
-      CNH: "",
+      cpf: "",
+      cnh: "",
       status: "Ativo",
       telefone: "",
       email: "",
@@ -128,16 +128,16 @@ export default function MotoristaNewPage() {
                 )}
               />
 
-              {/* CPF */}
+              {/* cpf */}
               <FormField
                 control={form.control}
-                name="CPF"
+                name="cpf"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CPF</FormLabel>
+                    <FormLabel>cpf</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="CPF (apenas números)"
+                        placeholder="cpf (apenas números)"
                         autoComplete="off"
                         {...field}
                       />
@@ -147,16 +147,16 @@ export default function MotoristaNewPage() {
                 )}
               />
 
-              {/* CNH */}
+              {/* cnh */}
               <FormField
                 control={form.control}
-                name="CNH"
+                name="cnh"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>CNH</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="CNH (apenas números)"
+                        placeholder="cnh (apenas números)"
                         autoComplete="off"
                         {...field}
                       />

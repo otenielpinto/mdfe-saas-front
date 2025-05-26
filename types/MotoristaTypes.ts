@@ -7,8 +7,8 @@ export interface Motorista {
   id_tenant?: number; // Tenant ID for multi-tenancy
   id_empresa?: number; // Company ID
   xNome: string; // Nome do motorista (obrigatório)
-  CPF: string; // CPF do motorista (obrigatório)
-  CNH?: string; // CNH do motorista (obrigatório)
+  cpf: string; // cpf do motorista (obrigatório)
+  cnh?: string; // CNH do motorista (obrigatório)
   status?: string; // Status do motorista (Ativo/Inativo)
   createdAt?: Date;
   updatedAt?: Date;

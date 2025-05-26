@@ -20,31 +20,32 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { X, User } from "lucide-react";
-
-// Interface for conductor data
-interface Condutor {
-  xNome: string;
-  CPF: string;
-}
+import { MdfeRodoviarioFormData, Condutor } from "@/types/MdfeConfigTypes";
 
 interface MdfeRodoviarioFormProps {
   onSubmit: (data: any) => void;
+  initialData?: MdfeRodoviarioFormData;
 }
 
-export function MdfeRodoviarioForm({ onSubmit }: MdfeRodoviarioFormProps) {
+export function MdfeRodoviarioForm({
+  onSubmit,
+  initialData,
+}: MdfeRodoviarioFormProps) {
   const [formData, setFormData] = useState({
-    codigoAgregacao: "",
-    placaVeiculo: "",
-    renavam: "",
-    tara: "",
-    capacidadeKG: "",
-    capacidadeM3: "",
-    tpCar: "02",
-    tpRod: "01",
+    codigoAgregacao: initialData?.codigoAgregacao || "",
+    placaVeiculo: initialData?.placaVeiculo || "",
+    renavam: initialData?.renavam || "",
+    tara: initialData?.tara || "",
+    capacidadeKG: initialData?.capacidadeKG || "",
+    capacidadeM3: initialData?.capacidadeM3 || "",
+    tpCar: initialData?.tpCar || "02",
+    tpRod: initialData?.tpRod || "01",
   });
 
   // State for conductors
-  const [condutores, setCondutores] = useState<Condutor[]>([]);
+  const [condutores, setCondutores] = useState<Condutor[]>(
+    initialData?.condutores || []
+  );
 
   // State for conductor modal
   const [isCondutorModalOpen, setIsCondutorModalOpen] = useState(false);
@@ -52,7 +53,7 @@ export function MdfeRodoviarioForm({ onSubmit }: MdfeRodoviarioFormProps) {
   // State for new conductor form data
   const [newCondutor, setNewCondutor] = useState<Condutor>({
     xNome: "",
-    CPF: "",
+    cpf: "",
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +74,7 @@ export function MdfeRodoviarioForm({ onSubmit }: MdfeRodoviarioFormProps) {
   // Add a conductor to the list
   const handleAddCondutor = () => {
     // Validate fields
-    if (!newCondutor.xNome || !newCondutor.CPF) {
+    if (!newCondutor.xNome || !newCondutor.cpf) {
       return; // Could add error handling here
     }
 
@@ -84,7 +85,7 @@ export function MdfeRodoviarioForm({ onSubmit }: MdfeRodoviarioFormProps) {
     // Reset form
     setNewCondutor({
       xNome: "",
-      CPF: "",
+      cpf: "",
     });
   };
 
@@ -250,7 +251,7 @@ export function MdfeRodoviarioForm({ onSubmit }: MdfeRodoviarioFormProps) {
                       <div>
                         <p className="font-medium">{condutor.xNome}</p>
                         <p className="text-xs text-muted-foreground">
-                          CPF: {condutor.CPF}
+                          CPF: {condutor.cpf}
                         </p>
                       </div>
                     </div>
@@ -290,11 +291,11 @@ export function MdfeRodoviarioForm({ onSubmit }: MdfeRodoviarioFormProps) {
               />
             </div>
             <div>
-              <Label htmlFor="CPF">CPF *</Label>
+              <Label htmlFor="cpf">CPF *</Label>
               <Input
-                id="CPF"
-                name="CPF"
-                value={newCondutor.CPF}
+                id="cpf"
+                name="cpf"
+                value={newCondutor.cpf}
                 onChange={handleCondutorChange}
                 placeholder="Somente números"
                 maxLength={11}

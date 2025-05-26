@@ -70,6 +70,22 @@ export default function NewMdfePage() {
                   ? config.infPercurso.map((p: any) => p.UFPer).join(", ")
                   : "",
             },
+            rodoviario: {
+              // Campos do veículo
+              codigoAgregacao: config.codigoAgregacao || "",
+              placaVeiculo: config.placaVeiculo || "",
+              renavam: config.renavam || "",
+              tara: config.tara || "",
+              capacidadeKG: config.capacidadeKG || "",
+              capacidadeM3: config.capacidadeM3 || "",
+              tpCar: config.tpCar || "",
+              tpRod: config.tpRod || "",
+
+              // Campos do motorista
+              condutores: [
+                { xNome: config.xNome || "", cpf: config.cpf || "" },
+              ],
+            },
           };
 
           // Se houver emitentes disponíveis, preencher com o primeiro emitente
@@ -303,17 +319,20 @@ export default function NewMdfePage() {
             {currentStep === 0 && (
               <MdfeDadosForm
                 onSubmit={handleSubmitStep}
-                initialData={formData.dados}
+                initialData={formData?.dados || {}}
               />
             )}
             {currentStep === 1 && (
               <MdfeEmitenteForm
                 onSubmit={handleSubmitStep}
-                initialData={formData.emitente}
+                initialData={formData?.emitente || {}}
               />
             )}
             {currentStep === 2 && (
-              <MdfeRodoviarioForm onSubmit={handleSubmitStep} />
+              <MdfeRodoviarioForm
+                onSubmit={handleSubmitStep}
+                initialData={formData?.rodoviario || {}}
+              />
             )}
             {currentStep === 3 && (
               <MdfeAquaviarioForm onSubmit={handleSubmitStep} />

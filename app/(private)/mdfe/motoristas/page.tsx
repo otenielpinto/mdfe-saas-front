@@ -137,8 +137,8 @@ export default function MotoristasPage() {
                   <TableCell className="font-medium">
                     {motorista.xNome}
                   </TableCell>
-                  <TableCell>{motorista.CPF}</TableCell>
-                  <TableCell>{motorista.CNH}</TableCell>
+                  <TableCell>{motorista.cpf}</TableCell>
+                  <TableCell>{motorista.cnh}</TableCell>
                   <TableCell>{getStatusBadge(motorista.status)}</TableCell>
                   <TableCell className="text-right space-x-2">
                     <Button variant="outline" size="sm" asChild>

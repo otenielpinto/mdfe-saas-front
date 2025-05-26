@@ -38,7 +38,7 @@ export function adaptarDadosCargaVeiculo(formData: any): Partial<Mdfe> {
             condutor: [
               {
                 xNome: formData.xNome,
-                CPF: formData.CPF,
+                cpf: formData.cpf,
               },
             ],
             UF: formData.UF,
