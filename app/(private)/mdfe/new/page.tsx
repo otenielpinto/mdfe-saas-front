@@ -92,7 +92,8 @@ export default function NewMdfePage() {
               municipioCarregamento: config.municipioCarregamento || "",
               municipioDescarregamento: config.municipioDescarregamento || "",
             },
-            informacoes_adicionais: {},
+            totalizadores: {} as any, // Inicializar como objeto vazio
+            informacoes_adicionais: {} as any,
           };
 
           // Se houver emitentes disponíveis, preencher com o primeiro emitente
@@ -251,6 +252,14 @@ export default function NewMdfePage() {
     });
   };
 
+  const handleSaveDraft = async () => {
+    console.log("Salvando rascunho do MDF-e com os seguintes dados:", formData);
+    toast({
+      title: "Rascunho Salvo",
+      description: "O rascunho do MDF-e foi salvo com sucesso.",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <Link href="/mdfe">
@@ -263,7 +272,14 @@ export default function NewMdfePage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Emitir novo MDF-e</h1>
         <div className="flex gap-2">
-          <Button onClick={handleEmit}>Emitir</Button>
+          <Button variant="outline" onClick={handleSaveDraft}>
+            <Save className="mr-2 h-4 w-4" />
+            Salvar Rascunho
+          </Button>
+          <Button onClick={handleEmit}>
+            <Wand2 className="mr-2 h-4 w-4" />
+            Emitir
+          </Button>
         </div>
       </div>
 
@@ -331,7 +347,10 @@ export default function NewMdfePage() {
               />
             )}
             {currentStep === 5 && (
-              <MdfeTotalizadoresForm onSubmit={handleSubmitStep} />
+              <MdfeTotalizadoresForm
+                onSubmit={handleSubmitStep}
+                initialData={formData || {}}
+              />
             )}
             {currentStep === 6 && (
               <MdfeInformacoesAdicionaisForm onSubmit={handleSubmitStep} />

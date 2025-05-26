@@ -146,6 +146,7 @@ export function MdfeDocumentosForm({
                       onChange={handleChange}
                       placeholder="Informe a chave da NF-e (44 dígitos)"
                       maxLength={44}
+                      autoComplete="off"
                     />
                   </div>
                   <div>
@@ -155,6 +156,7 @@ export function MdfeDocumentosForm({
                       name="segCodBarra"
                       value={novoDocumento.segCodBarra}
                       onChange={handleChange}
+                      autoComplete="off"
                     />
                   </div>
                   <div className="flex items-end">
@@ -187,6 +189,7 @@ export function MdfeDocumentosForm({
                       placeholder="0,00"
                       type="number"
                       step="0.01"
+                      autoComplete="off"
                     />
                   </div>
                   <div>
@@ -199,6 +202,7 @@ export function MdfeDocumentosForm({
                       placeholder="0,00"
                       type="number"
                       step="0.01"
+                      autoComplete="off"
                     />
                   </div>
                 </div>
@@ -214,6 +218,7 @@ export function MdfeDocumentosForm({
                       value={novoDocumento.municipioCarregamento}
                       onChange={handleChange}
                       placeholder="Nome do município"
+                      autoComplete="off"
                     />
                   </div>
                   <div>
@@ -226,6 +231,7 @@ export function MdfeDocumentosForm({
                       value={novoDocumento.municipioDescarregamento}
                       onChange={handleChange}
                       placeholder="Nome do município"
+                      autoComplete="off"
                     />
                   </div>
                 </div>
