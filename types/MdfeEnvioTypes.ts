@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 // Base response interface
 export interface MdfeResponse {
   success: boolean;
@@ -176,26 +174,6 @@ export interface MdfeDocument {
   id_tenant: number;
   id_empresa: number;
 }
-
-// Computed fields interface for enhanced data
-export interface MdfeComputedFields {
-  totalDocumentos: number;
-  valorTotalCarga: number;
-  pesoTotalCarga: number;
-  isRodoviario: boolean;
-  isAquaviario: boolean;
-  temDocumentosNfe: boolean;
-  temDocumentosCte: boolean;
-  temDocumentosMdfe: boolean;
-  statusFormatted: string;
-  dataEmissaoFormatted: string;
-  percursoCompleto: string[];
-}
-
-// Enhanced MDFe document with computed fields
-export interface MdfeDocumentEnhanced
-  extends MdfeDocument,
-    MdfeComputedFields {}
 
 // Legacy interface for backward compatibility
 export interface MdfeEnvio {

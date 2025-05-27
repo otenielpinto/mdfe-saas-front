@@ -2,7 +2,7 @@
 
 import { TMongo } from "@/infra/mongoClient";
 import { ObjectId } from "mongodb";
-import { MdfeResponse, MdfeDocument, MdfeStatus } from "@/types/MdfeEnvioTypes";
+import { MdfeResponse, MdfeStatus } from "@/types/MdfeEnvioTypes";
 import { getUser } from "@/actions/actSession";
 import { MdfeSearchForm } from "@/types/MdfeSearchFormTypes";
 import { getBrazilDateTime, formatDateTimeBrazil } from "@/lib/brazil-datetime";
@@ -319,15 +319,15 @@ export async function createMdfe(data: any): Promise<MdfeResponse> {
     };
   }
 
+  // Add timestamps with Brazil timezone
+  const currentDateTime = getBrazilDateTime();
+  data.dados.dtEmi = getBrazilDateTime(data.dados.dtEmi);
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
-    // Add timestamps with Brazil timezone
-    const currentDateTime = getBrazilDateTime();
     const obj = {
       ...data,
       dt_movto: currentDateTime,
-      status: MdfeStatus.CRIADO,
       createdAt: currentDateTime,
       updatedAt: currentDateTime,
       id_tenant: Number(user.id_tenant),

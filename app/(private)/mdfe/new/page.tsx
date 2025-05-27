@@ -72,6 +72,12 @@ export default function NewMdfePage() {
               cMDF: cMDF,
               cDV: "",
               dhEmi: lib.formatDateForInput(new Date()),
+              dtEmi: new Date(),
+              hora: new Date().toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              }),
               tpModal: config.modal?.toString() || "1",
               ufIni: config.UFIni || "",
               ufFim: config.UFFim || "",
@@ -170,6 +176,13 @@ export default function NewMdfePage() {
               cMDF: "",
               cDV: "",
               dhEmi: lib.formatDateForInput(new Date()),
+              dtEmi: new Date(),
+              hora: new Date().toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              }),
+
               tpModal: "1",
               ufIni: "",
               ufFim: "",
@@ -311,6 +324,7 @@ export default function NewMdfePage() {
         const mdfeData = {
           ...formData,
           dt_movto: new Date(),
+          status: "CRIADO",
         };
 
         const result = await createMdfe(mdfeData);
