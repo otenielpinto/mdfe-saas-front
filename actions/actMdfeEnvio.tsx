@@ -2,7 +2,9 @@
 
 import { TMongo } from "@/infra/mongoClient";
 import { ObjectId } from "mongodb";
-import { Mdfe, MdfeResponse } from "@/types/MdfeTypes";
+import { MdfeEnvio, MdfeResponse } from "@/types/MdfeEnvioTypes";
+
+const collectionName = "mdfe_envio";
 
 /**
  * Get all MDFe
@@ -12,7 +14,7 @@ export async function getAllMdfe(): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const mdfes = await clientdb
-      .collection("mdfe")
+      .collection(collectionName)
       .find()
       .sort({ createdAt: -1 })
       .toArray();
@@ -21,7 +23,7 @@ export async function getAllMdfe(): Promise<MdfeResponse> {
     return {
       success: true,
       message: "MDFes encontrados com sucesso",
-      data: mdfes as unknown as Mdfe[],
+      data: mdfes,
     };
   } catch (error) {
     console.error("Erro ao buscar MDFes:", error);
@@ -38,10 +40,12 @@ export async function getAllMdfe(): Promise<MdfeResponse> {
  * @param id MDFe ID
  * @returns Response with MDFe object
  */
-export async function getMdfeById(id: number): Promise<MdfeResponse> {
+export async function getMdfeById(id: string): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const mdfe = await clientdb.collection("mdfe").findOne({ id: Number(id) });
+    const mdfe = await clientdb
+      .collection(collectionName)
+      .findOne({ id: String(id) });
     await TMongo.mongoDisconnect(client);
 
     if (!mdfe) {
@@ -55,7 +59,7 @@ export async function getMdfeById(id: number): Promise<MdfeResponse> {
     return {
       success: true,
       message: "MDFe encontrado com sucesso",
-      data: mdfe as unknown as Mdfe,
+      data: mdfe,
     };
   } catch (error) {
     console.error(`Erro ao buscar MDFe com ID ${id}:`, error);
@@ -76,7 +80,7 @@ export async function getMdfeByObjectId(id: string): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const mdfe = await clientdb
-      .collection("mdfe")
+      .collection(collectionName)
       .findOne({ _id: new ObjectId(id) });
     await TMongo.mongoDisconnect(client);
 
@@ -91,7 +95,7 @@ export async function getMdfeByObjectId(id: string): Promise<MdfeResponse> {
     return {
       success: true,
       message: "MDFe encontrado com sucesso",
-      data: mdfe as unknown as Mdfe,
+      data: mdfe,
     };
   } catch (error) {
     console.error(`Erro ao buscar MDFe com ObjectId ${id}:`, error);
@@ -111,7 +115,7 @@ export async function getMdfeByObjectId(id: string): Promise<MdfeResponse> {
 export async function getMdfeByChave(chave: string): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const mdfe = await clientdb.collection("mdfe").findOne({ chave });
+    const mdfe = await clientdb.collection(collectionName).findOne({ chave });
     await TMongo.mongoDisconnect(client);
 
     if (!mdfe) {
@@ -125,7 +129,7 @@ export async function getMdfeByChave(chave: string): Promise<MdfeResponse> {
     return {
       success: true,
       message: "MDFe encontrado com sucesso",
-      data: mdfe as unknown as Mdfe,
+      data: mdfe,
     };
   } catch (error) {
     console.error(`Erro ao buscar MDFe com chave ${chave}:`, error);
@@ -142,20 +146,20 @@ export async function getMdfeByChave(chave: string): Promise<MdfeResponse> {
  * @param data MDFe data
  * @returns Response with created MDFe
  */
-export async function createMdfe(data: Mdfe): Promise<MdfeResponse> {
+export async function createMdfe(data: any): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Add timestamps
     const dataWithTimestamps = {
       ...data,
-      status: "CRIADO",
+      status: "DIGITADO",
       createdAt: new Date(),
       updatedAt: new Date(),
     };
 
     const result = await clientdb
-      .collection("mdfe")
+      .collection(collectionName)
       .insertOne(dataWithTimestamps);
     await TMongo.mongoDisconnect(client);
 
@@ -165,7 +169,7 @@ export async function createMdfe(data: Mdfe): Promise<MdfeResponse> {
       data: {
         ...dataWithTimestamps,
         _id: result.insertedId,
-      } as unknown as Mdfe,
+      },
     };
   } catch (error) {
     console.error("Erro ao criar MDFe:", error);
@@ -184,16 +188,16 @@ export async function createMdfe(data: Mdfe): Promise<MdfeResponse> {
  * @returns Response with update result
  */
 export async function updateMdfe(
-  id: number,
-  data: Partial<Mdfe>
+  id: string,
+  data: Partial<any>
 ): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if MDFe exists
     const existingMdfe = await clientdb
-      .collection("mdfe")
-      .findOne({ id: Number(id) });
+      .collection(collectionName)
+      .findOne({ id: id });
 
     if (!existingMdfe) {
       await TMongo.mongoDisconnect(client);
@@ -211,8 +215,8 @@ export async function updateMdfe(
     };
 
     await clientdb
-      .collection("mdfe")
-      .updateOne({ id: Number(id) }, { $set: dataWithTimestamp });
+      .collection(collectionName)
+      .updateOne({ id: String(id) }, { $set: dataWithTimestamp });
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -221,7 +225,7 @@ export async function updateMdfe(
       data: {
         ...existingMdfe,
         ...dataWithTimestamp,
-      } as unknown as Mdfe,
+      } as any,
     };
   } catch (error) {
     console.error(`Erro ao atualizar MDFe com ID ${id}:`, error);
@@ -241,14 +245,14 @@ export async function updateMdfe(
  */
 export async function updateMdfeByObjectId(
   id: string,
-  data: Partial<Mdfe>
+  data: Partial<any>
 ): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if MDFe exists
     const existingMdfe = await clientdb
-      .collection("mdfe")
+      .collection(collectionName)
       .findOne({ _id: new ObjectId(id) });
 
     if (!existingMdfe) {
@@ -267,7 +271,7 @@ export async function updateMdfeByObjectId(
     };
 
     await clientdb
-      .collection("mdfe")
+      .collection(collectionName)
       .updateOne({ _id: new ObjectId(id) }, { $set: dataWithTimestamp });
     await TMongo.mongoDisconnect(client);
 
@@ -294,14 +298,14 @@ export async function updateMdfeByObjectId(
  * @param id MDFe ID
  * @returns Response with delete result
  */
-export async function deleteMdfe(id: number): Promise<MdfeResponse> {
+export async function deleteMdfe(id: string): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if MDFe exists
     const existingMdfe = await clientdb
-      .collection("mdfe")
-      .findOne({ id: Number(id) });
+      .collection(collectionName)
+      .findOne({ id: String(id) });
 
     if (!existingMdfe) {
       await TMongo.mongoDisconnect(client);
@@ -312,13 +316,13 @@ export async function deleteMdfe(id: number): Promise<MdfeResponse> {
       };
     }
 
-    await clientdb.collection("mdfe").deleteOne({ id: Number(id) });
+    await clientdb.collection(collectionName).deleteOne({ id: String(id) });
     await TMongo.mongoDisconnect(client);
 
     return {
       success: true,
       message: "MDFe excluído com sucesso",
-      data: existingMdfe as unknown as Mdfe,
+      data: existingMdfe,
     };
   } catch (error) {
     console.error(`Erro ao excluir MDFe com ID ${id}:`, error);
@@ -341,7 +345,7 @@ export async function deleteMdfeByObjectId(id: string): Promise<MdfeResponse> {
 
     // Check if MDFe exists
     const existingMdfe = await clientdb
-      .collection("mdfe")
+      .collection(collectionName)
       .findOne({ _id: new ObjectId(id) });
 
     if (!existingMdfe) {
@@ -353,13 +357,15 @@ export async function deleteMdfeByObjectId(id: string): Promise<MdfeResponse> {
       };
     }
 
-    await clientdb.collection("mdfe").deleteOne({ _id: new ObjectId(id) });
+    await clientdb
+      .collection(collectionName)
+      .deleteOne({ _id: new ObjectId(id) });
     await TMongo.mongoDisconnect(client);
 
     return {
       success: true,
       message: "MDFe excluído com sucesso",
-      data: existingMdfe as unknown as Mdfe,
+      data: existingMdfe,
     };
   } catch (error) {
     console.error(`Erro ao excluir MDFe com ObjectId ${id}:`, error);
@@ -382,7 +388,7 @@ export async function getMdfesByEmpresa(
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const mdfes = await clientdb
-      .collection("mdfe")
+      .collection(collectionName)
       .find({ empresa: Number(empresaId) })
       .sort({ createdAt: -1 })
       .toArray();
@@ -391,7 +397,7 @@ export async function getMdfesByEmpresa(
     return {
       success: true,
       message: "MDFes encontrados com sucesso",
-      data: mdfes as unknown as Mdfe[],
+      data: mdfes,
     };
   } catch (error) {
     console.error(`Erro ao buscar MDFes da empresa ${empresaId}:`, error);
@@ -410,21 +416,19 @@ export async function getMdfesByEmpresa(
  * @returns Response with update result
  */
 export async function updateMdfeStatus(
-  id: string | number,
+  id: string,
   status: string
 ): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     let filter;
 
-    if (typeof id === "number") {
-      filter = { id: Number(id) };
-    } else {
-      filter = { _id: new ObjectId(id) };
-    }
+    filter = { id: String(id) };
 
     // Check if MDFe exists
-    const existingMdfe = await clientdb.collection("mdfe").findOne(filter);
+    const existingMdfe = await clientdb
+      .collection(collectionName)
+      .findOne(filter);
 
     if (!existingMdfe) {
       await TMongo.mongoDisconnect(client);
@@ -435,7 +439,7 @@ export async function updateMdfeStatus(
       };
     }
 
-    await clientdb.collection("mdfe").updateOne(filter, {
+    await clientdb.collection(collectionName).updateOne(filter, {
       $set: {
         status,
         updatedAt: new Date(),
@@ -451,7 +455,7 @@ export async function updateMdfeStatus(
         ...existingMdfe,
         status,
         updatedAt: new Date(),
-      } as unknown as Mdfe,
+      },
     };
   } catch (error) {
     console.error(`Erro ao atualizar status do MDFe ${id}:`, error);

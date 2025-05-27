@@ -12,7 +12,7 @@ import { useRouter } from "next/navigation";
 import { authSchema, TAuthSchema } from "@/auth/schema/authSchema";
 import { createUser } from "@/auth/actions/auth-actions";
 import { User } from "@/auth/types/user";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 const Page = () => {
   const {
@@ -22,6 +22,7 @@ const Page = () => {
   } = useForm<TAuthSchema>({
     resolver: zodResolver(authSchema),
   });
+  const { toast } = useToast();
   const router = useRouter();
 
   const onSubmit = async ({ email, password, name }: TAuthSchema) => {
@@ -36,12 +37,13 @@ const Page = () => {
     const res = await createUser(user);
 
     if (res.insertedId) {
-      toast.success(
-        "Conta criada com sucesso, solicite ao administrador para ativar sua conta"
-      );
+      toast({ title: "Sucesso", description: "Conta criada com sucesso!" });
       router.push("/sign-in");
     } else {
-      toast.error("Erro ao criar conta ou email já cadastrado");
+      toast({
+        title: "Erro",
+        description: "Erro ao criar conta ou email já cadastrado",
+      });
     }
   };
 

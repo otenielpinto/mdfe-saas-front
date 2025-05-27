@@ -39,9 +39,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Mdfe } from "@/types/MdfeTypes";
+import { Mdfe } from "@/types/MdfeEnvioTypes";
 import { Badge } from "@/components/ui/badge";
-import { updateMdfeStatus } from "@/actions/actMdfe";
+import { updateMdfeStatus } from "@/actions/actMdfeEnvio";
 import { useToast } from "@/components/ui/use-toast";
 
 interface MdfeTableProps {

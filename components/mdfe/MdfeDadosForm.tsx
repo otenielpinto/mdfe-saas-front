@@ -31,7 +31,7 @@ export function MdfeDadosForm({ onSubmit, initialData }: MdfeDadosFormProps) {
     numero: initialData?.numero || "", // equivalente a nMDF no schema
     cMDF: initialData?.cMDF || "", // Tipo do Documento Fiscal
     cDV: initialData?.cDV || "", // Dígito Verificador
-    dhEmi: new Date().toISOString().split("T")[0],
+    dhEmi: initialData?.dhEmi || "", // Data e hora de emissão do MDF-e
     tpModal: initialData?.tpModal || "1", // equivalente a modal no schema
     ufIni: initialData?.ufIni || "", // equivalente a UFIni no schema
     ufFim: initialData?.ufFim || "", // equivalente a UFFim no schema
@@ -204,13 +204,13 @@ export function MdfeDadosForm({ onSubmit, initialData }: MdfeDadosFormProps) {
               />
             </div>
             <div>
-              <Label htmlFor="cMDF">Tipo do Documento Fiscal</Label>
+              <Label htmlFor="cMDF">Código do Documento Fiscal</Label>
               <Input
                 id="cMDF"
                 name="cMDF"
                 value={formData.cMDF}
                 onChange={handleChange}
-                placeholder="Tipo do Documento Fiscal"
+                placeholder="Código do Documento Fiscal"
               />
             </div>
             <div>
@@ -228,9 +228,9 @@ export function MdfeDadosForm({ onSubmit, initialData }: MdfeDadosFormProps) {
               <Input
                 id="dhEmi"
                 name="dhEmi"
-                type="date"
                 value={formData.dhEmi}
                 onChange={handleChange}
+                autoComplete="off"
               />
             </div>
             <div>

@@ -37,7 +37,6 @@ export async function login(formData: FormData) {
   const isMatch = await bcryptjs.compare(password, user.password);
   if (!isMatch) {
     console.log("Usuário ou senha inválidos");
-    alert("Usuário ou senha inválidos");
     redirect("/sign-in");
   }
 
@@ -54,9 +53,11 @@ export async function login(formData: FormData) {
     id_tenant: user.id_tenant,
   });
 
-  redirect(
-    (process.env.NEXT_PUBLIC_KOMACHE_AFTER_SIGN_IN_URL as string) || "/home"
-  );
+  if (user) {
+    redirect(
+      (process.env.NEXT_PUBLIC_KOMACHE_AFTER_SIGN_IN_URL as string) || "/home"
+    );
+  }
 }
 
 export async function getUsers() {
@@ -113,7 +114,6 @@ export async function getUserByEmail(email: any): Promise<any> {
   //mover isso para o create route
   if (!response && email == admin_email) {
     let salt = await bcryptjs.genSalt(10);
-
     let user: User = {
       id: uuidv4(),
       email,

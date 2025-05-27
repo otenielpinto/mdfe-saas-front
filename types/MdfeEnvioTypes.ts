@@ -1,13 +1,13 @@
 export interface MdfeResponse {
   success: boolean;
   message: string;
-  data?: Mdfe | Mdfe[] | null;
+  data?: any | any[] | null;
   error?: string;
 }
 
-export interface Mdfe {
+export interface MdfeEnvio {
   _id?: any;
-  id?: number;
+  id?: string;
   empresa?: number;
   chave?: string;
   infMDFe: {
@@ -77,7 +77,7 @@ export interface Mdfe {
           tara?: number;
           condutor: {
             xNome: string;
-            CPF: string;
+            cpf: string;
           }[];
           UF?: string;
         };
@@ -117,7 +117,7 @@ export interface Mdfe {
   infMDFeSupl?: {
     qrCodMDFe?: string;
   };
-  ambiente: "homologacao" | "producao";
+  ambiente: string;
   referencia?: string;
   status?: string;
   createdAt?: Date;
