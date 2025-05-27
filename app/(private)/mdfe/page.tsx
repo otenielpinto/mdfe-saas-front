@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MdfeTable from "@/components/mdfe/MdfeTable";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/collapsible";
 import { UF_DATA } from "@/actions/actUF";
 import { MdfeSearchForm } from "@/types/MdfeSearchFormTypes";
+import { lib } from "@/lib/lib";
 import {
   statusOptions,
   tipoEmissaoOptions,
@@ -124,6 +125,20 @@ const mockMdfes = [
   },
 ];
 
+/**
+ * Gets the default date range (today and 30 days ago)
+ */
+const getDefaultDateRange = () => {
+  const today = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+
+  return {
+    periodoEmissaoInicio: lib.formatDateForInput(thirtyDaysAgo),
+    periodoEmissaoFim: lib.formatDateForInput(today),
+  };
+};
+
 export default function MdfePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [isSearchExpanded, setIsSearchExpanded] = useState(true);
@@ -144,6 +159,16 @@ export default function MdfePage() {
   });
 
   const itemsPerPage = 10;
+
+  // Set default date range on component mount
+  useEffect(() => {
+    const defaultDates = getDefaultDateRange();
+    setSearchForm((prev) => ({
+      ...prev,
+      periodoEmissaoInicio: defaultDates.periodoEmissaoInicio,
+      periodoEmissaoFim: defaultDates.periodoEmissaoFim,
+    }));
+  }, []);
 
   // UF options from the existing UF_DATA
   const ufOptions = Array.isArray(UF_DATA) ? UF_DATA : [];

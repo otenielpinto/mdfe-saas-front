@@ -18,6 +18,7 @@ import { MdfeInformacoesAdicionaisForm } from "@/components/mdfe/MdfeInformacoes
 import { createMdfe } from "@/actions/actMdfeEnvio";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
+import { lib } from "@/lib/lib";
 
 const steps = [
   "Dados",
@@ -42,11 +43,6 @@ export default function NewMdfePage() {
     const loadDefaultConfig = async () => {
       try {
         setIsLoading(true);
-        // Mapear dados de configuração para o formato do formulário
-        const now = new Date();
-        const brazilianDate = now.toLocaleDateString("pt-BR", {
-          timeZone: "America/Sao_Paulo",
-        });
 
         let [configResponse, emitenteResponse] = await Promise.all([
           getMdfeConfig(),
@@ -75,7 +71,7 @@ export default function NewMdfePage() {
               numero: "",
               cMDF: cMDF,
               cDV: "",
-              dhEmi: brazilianDate,
+              dhEmi: lib.formatDateForInput(new Date()),
               tpModal: config.modal?.toString() || "1",
               ufIni: config.UFIni || "",
               ufFim: config.UFFim || "",
@@ -173,7 +169,7 @@ export default function NewMdfePage() {
               numero: "",
               cMDF: "",
               cDV: "",
-              dhEmi: brazilianDate,
+              dhEmi: lib.formatDateForInput(new Date()),
               tpModal: "1",
               ufIni: "",
               ufFim: "",
@@ -314,7 +310,6 @@ export default function NewMdfePage() {
         // Preparar dados para criação
         const mdfeData = {
           ...formData,
-          status: "EMITIDO",
           dt_movto: new Date(),
         };
 

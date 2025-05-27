@@ -229,6 +229,7 @@ export function MdfeDadosForm({ onSubmit, initialData }: MdfeDadosFormProps) {
                 id="dhEmi"
                 name="dhEmi"
                 value={formData.dhEmi}
+                type="date"
                 onChange={handleChange}
                 autoComplete="off"
               />

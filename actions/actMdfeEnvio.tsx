@@ -2,16 +2,18 @@
 
 import { TMongo } from "@/infra/mongoClient";
 import { ObjectId } from "mongodb";
-import { MdfeResponse } from "@/types/MdfeEnvioTypes";
+import { MdfeResponse, MdfeDocument, MdfeStatus } from "@/types/MdfeEnvioTypes";
 import { getUser } from "@/actions/actSession";
+import { MdfeSearchForm } from "@/types/MdfeSearchFormTypes";
+import { getBrazilDateTime, formatDateTimeBrazil } from "@/lib/brazil-datetime";
 
 const collectionName = "mdfe_envio";
 
 /**
- * Get all MDFe
- * @returns Response with array of MDFe
+ * Get all MDFe with enhanced filtering and computed fields
+ * @returns Response with array of enhanced MDFe documents
  */
-export async function getAllMdfe(): Promise<MdfeResponse> {
+export async function getAllMdfe(data: MdfeSearchForm): Promise<MdfeResponse> {
   const user = await getUser();
   if (!user?.id_tenant) {
     return {
@@ -21,24 +23,126 @@ export async function getAllMdfe(): Promise<MdfeResponse> {
     };
   }
 
+  // Base filter with tenant
+  const filter: any = { id_tenant: Number(user.id_tenant) };
+
+  const {
+    periodoEmissaoInicio,
+    periodoEmissaoFim,
+    serie,
+    numeroInicial,
+    numeroFinal,
+    situacao,
+    tipoEmissao,
+    modalidade,
+    ufCarregamento,
+    ufDescarregamento,
+    ufPercurso,
+    chaveCte,
+    chaveNfe,
+  } = data;
+
+  // Date range filter for emission period
+  if (periodoEmissaoInicio || periodoEmissaoFim) {
+    filter["dados.dhEmi"] = {};
+    if (periodoEmissaoInicio) {
+      // Convert YYYY-MM-DD to DD/MM/YYYY for comparison
+      const [year, month, day] = periodoEmissaoInicio.split("-");
+      const dateStr = `${day}/${month}/${year}`;
+      filter["dados.dhEmi"].$gte = dateStr;
+    }
+    if (periodoEmissaoFim) {
+      const [year, month, day] = periodoEmissaoFim.split("-");
+      const dateStr = `${day}/${month}/${year}`;
+      filter["dados.dhEmi"].$lte = dateStr;
+    }
+  }
+
+  // Serie filter
+  if (serie) {
+    filter["dados.serie"] = serie;
+  }
+
+  // Number range filter
+  if (numeroInicial || numeroFinal) {
+    filter["dados.numero"] = {};
+    if (numeroInicial) {
+      filter["dados.numero"].$gte = numeroInicial;
+    }
+    if (numeroFinal) {
+      filter["dados.numero"].$lte = numeroFinal;
+    }
+  }
+
+  // Status/Situation filter
+  if (situacao) {
+    filter.status = situacao;
+  }
+
+  // Emission type filter
+  if (tipoEmissao) {
+    filter["dados.tpEmis"] = tipoEmissao;
+  }
+
+  // Modality filter
+  if (modalidade) {
+    filter["dados.tpModal"] = modalidade;
+  }
+
+  // UF filters
+  if (ufCarregamento) {
+    filter["dados.infMunCarrega.cMunCarrega"] = {
+      $regex: `^${ufCarregamento}`,
+    };
+  }
+
+  if (ufDescarregamento) {
+    filter["dados.ufFim"] = ufDescarregamento;
+  }
+
+  if (ufPercurso) {
+    filter["dados.infPercurso"] = { $regex: ufPercurso, $options: "i" };
+  }
+
+  // CTe key filter - search in documents array
+  if (chaveCte) {
+    filter["informacoes_dos_documentos.cte.chave"] = {
+      $regex: chaveCte,
+      $options: "i",
+    };
+  }
+
+  // NFe key filter - search in documents array
+  if (chaveNfe) {
+    filter["informacoes_dos_documentos.nfe.chave"] = {
+      $regex: chaveNfe,
+      $options: "i",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const mdfes = await clientdb
       .collection(collectionName)
-      .find({ id_tenant: Number(user.id_tenant) })
+      .find(filter)
+      .sort({ createdAt: -1 })
       .toArray();
     await TMongo.mongoDisconnect(client);
 
-    // Serialize MongoDB documents for Client Components
-    const serializedMdfes = mdfes.map((mdfe) => ({
-      ...mdfe,
-      _id: mdfe._id.toString(),
-    }));
+    // Serialize MongoDB document for Client Components
+    const rows = mdfes.map((mdfe) => {
+      const row = {
+        ...mdfe,
+        _id: mdfe._id.toString(),
+      };
+
+      return row;
+    });
 
     return {
       success: true,
-      message: "MDFes encontrados com sucesso",
-      data: serializedMdfes,
+      message: `${rows.length} MDFe(s) encontrado(s) com sucesso`,
+      data: rows,
     };
   } catch (error) {
     console.error("Erro ao buscar MDFes:", error);
@@ -201,8 +305,8 @@ export async function getMdfeByChave(chave: string): Promise<MdfeResponse> {
 }
 
 /**
- * Create a new MDFe
- * @param data MDFe data
+ * Create a new MDFe with validation and auto-generation
+ * @param data MDFe creation data
  * @returns Response with created MDFe
  */
 export async function createMdfe(data: any): Promise<MdfeResponse> {
@@ -218,27 +322,27 @@ export async function createMdfe(data: any): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
-    // Add timestamps
-    const dataWithTimestamps = {
+    // Add timestamps with Brazil timezone
+    const currentDateTime = getBrazilDateTime();
+    const obj = {
       ...data,
-      status: "Em digitacao",
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      dt_movto: currentDateTime,
+      status: MdfeStatus.CRIADO,
+      createdAt: currentDateTime,
+      updatedAt: currentDateTime,
       id_tenant: Number(user.id_tenant),
       id_empresa: Number(user.id_empresa),
     };
 
-    const result = await clientdb
-      .collection(collectionName)
-      .insertOne(dataWithTimestamps);
+    const result = await clientdb.collection(collectionName).insertOne(obj);
     await TMongo.mongoDisconnect(client);
 
     return {
       success: true,
       message: "MDFe criado com sucesso",
       data: {
-        ...dataWithTimestamps,
-        _id: result.insertedId,
+        ...obj,
+        _id: result.insertedId.toString(),
       },
     };
   } catch (error) {
@@ -252,15 +356,12 @@ export async function createMdfe(data: any): Promise<MdfeResponse> {
 }
 
 /**
- * Update an existing MDFe
+ * Update an existing MDFe with validation
  * @param id MDFe ID
  * @param data Updated MDFe data
  * @returns Response with update result
  */
-export async function updateMdfe(
-  id: string,
-  data: Partial<any>
-): Promise<MdfeResponse> {
+export async function updateMdfe(id: string, data: any): Promise<MdfeResponse> {
   const user = await getUser();
   if (!user?.id_tenant) {
     return {
@@ -288,31 +389,23 @@ export async function updateMdfe(
       };
     }
 
-    // Add updated timestamp
-    const dataWithTimestamp = {
-      ...data,
-      updatedAt: new Date(),
-    };
-
     await clientdb.collection(collectionName).updateOne(
       {
         id: String(id),
         id_tenant: Number(user.id_tenant),
       },
-      { $set: dataWithTimestamp }
+      { $set: data }
     );
     await TMongo.mongoDisconnect(client);
 
     return {
       success: true,
       message: "MDFe atualizado com sucesso",
-      data: {
-        ...existingMdfe,
-        ...dataWithTimestamp,
-      } as any,
+      data: data,
     };
   } catch (error) {
     console.error(`Erro ao atualizar MDFe com ID ${id}:`, error);
+
     return {
       success: false,
       message: "Erro ao atualizar MDFe",
