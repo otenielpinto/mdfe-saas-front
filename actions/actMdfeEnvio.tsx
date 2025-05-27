@@ -13,17 +13,19 @@ const collectionName = "mdfe_envio";
 export async function getAllMdfe(): Promise<MdfeResponse> {
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const mdfes = await clientdb
-      .collection(collectionName)
-      .find()
-      .sort({ createdAt: -1 })
-      .toArray();
+    const mdfes = await clientdb.collection(collectionName).find({}).toArray();
     await TMongo.mongoDisconnect(client);
+
+    // Serialize MongoDB documents for Client Components
+    const serializedMdfes = mdfes.map((mdfe) => ({
+      ...mdfe,
+      _id: mdfe._id.toString(),
+    }));
 
     return {
       success: true,
       message: "MDFes encontrados com sucesso",
-      data: mdfes,
+      data: serializedMdfes,
     };
   } catch (error) {
     console.error("Erro ao buscar MDFes:", error);
@@ -56,10 +58,16 @@ export async function getMdfeById(id: string): Promise<MdfeResponse> {
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedMdfe = {
+      ...mdfe,
+      _id: mdfe._id.toString(),
+    };
+
     return {
       success: true,
       message: "MDFe encontrado com sucesso",
-      data: mdfe,
+      data: serializedMdfe,
     };
   } catch (error) {
     console.error(`Erro ao buscar MDFe com ID ${id}:`, error);
@@ -92,10 +100,16 @@ export async function getMdfeByObjectId(id: string): Promise<MdfeResponse> {
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedMdfe = {
+      ...mdfe,
+      _id: mdfe._id.toString(),
+    };
+
     return {
       success: true,
       message: "MDFe encontrado com sucesso",
-      data: mdfe,
+      data: serializedMdfe,
     };
   } catch (error) {
     console.error(`Erro ao buscar MDFe com ObjectId ${id}:`, error);

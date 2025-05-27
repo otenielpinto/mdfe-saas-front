@@ -39,10 +39,16 @@ export async function getAllMotoristas(): Promise<MotoristaResponse> {
       .toArray();
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB documents for Client Components
+    const serializedMotoristas = motoristas.map((motorista) => ({
+      ...motorista,
+      _id: motorista._id.toString(),
+    }));
+
     return {
       success: true,
       message: "Motoristas encontrados com sucesso",
-      data: motoristas as Motorista[],
+      data: serializedMotoristas as Motorista[],
     };
   } catch (error) {
     console.error("Erro ao buscar motoristas:", error);
@@ -96,10 +102,16 @@ export async function getMotoristaById(id: number): Promise<MotoristaResponse> {
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedMotorista = {
+      ...motorista,
+      _id: motorista._id.toString(),
+    };
+
     return {
       success: true,
       message: "Motorista encontrado com sucesso",
-      data: motorista as Motorista,
+      data: serializedMotorista as Motorista,
     };
   } catch (error) {
     console.error(`Erro ao buscar motorista com ID ${id}:`, error);
@@ -155,10 +167,16 @@ export async function getMotoristaByObjectId(
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedMotorista = {
+      ...motorista,
+      _id: motorista._id.toString(),
+    };
+
     return {
       success: true,
       message: "Motorista encontrado com sucesso",
-      data: motorista as Motorista,
+      data: serializedMotorista as Motorista,
     };
   } catch (error) {
     console.error(`Erro ao buscar motorista com ObjectId ${id}:`, error);
@@ -214,10 +232,16 @@ export async function getMotoristaBycpf(
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedMotorista = {
+      ...motorista,
+      _id: motorista._id.toString(),
+    };
+
     return {
       success: true,
       message: "Motorista encontrado com sucesso",
-      data: motorista as Motorista,
+      data: serializedMotorista as Motorista,
     };
   } catch (error) {
     console.error(`Erro ao buscar motorista com cpf ${cpf}:`, error);

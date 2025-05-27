@@ -34,10 +34,16 @@ export async function getAllMdfeEmitentes(): Promise<MdfeEmitenteResponse> {
       .toArray();
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB documents for Client Components
+    const serializedEmitentes = emitentes.map((emitente) => ({
+      ...emitente,
+      _id: emitente._id.toString(),
+    }));
+
     return {
       success: true,
       message: "Emitentes encontrados com sucesso",
-      data: emitentes,
+      data: serializedEmitentes,
     };
   } catch (error) {
     console.error("Erro ao buscar emitentes:", error);
@@ -82,10 +88,16 @@ export async function getMdfeEmitenteById(
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedEmitente = {
+      ...emitente,
+      _id: emitente._id.toString(),
+    };
+
     return {
       success: true,
       message: "Emitente encontrado com sucesso",
-      data: emitente as unknown as MdfeEmitente,
+      data: serializedEmitente as unknown as MdfeEmitente,
     };
   } catch (error) {
     console.error(`Erro ao buscar emitente com ID ${id}:`, error);
@@ -130,10 +142,16 @@ export async function getMdfeEmitenteByObjectId(
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedEmitente = {
+      ...emitente,
+      _id: emitente._id.toString(),
+    };
+
     return {
       success: true,
       message: "Emitente encontrado com sucesso",
-      data: emitente as unknown as MdfeEmitente,
+      data: serializedEmitente as unknown as MdfeEmitente,
     };
   } catch (error) {
     console.error(`Erro ao buscar emitente com ObjectId ${id}:`, error);
@@ -485,10 +503,16 @@ export async function getMdfeEmitenteByCnpj(
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedEmitente = {
+      ...emitente,
+      _id: emitente._id.toString(),
+    };
+
     return {
       success: true,
       message: "Emitente encontrado com sucesso",
-      data: emitente as unknown as MdfeEmitente,
+      data: serializedEmitente as unknown as MdfeEmitente,
     };
   } catch (error) {
     console.error(`Erro ao buscar emitente com CNPJ ${cnpj}:`, error);
@@ -528,10 +552,16 @@ export async function getMdfeEmitentesByEmpresa(
       .toArray();
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB documents for Client Components
+    const serializedEmitentes = emitentes.map((emitente) => ({
+      ...emitente,
+      _id: emitente._id.toString(),
+    }));
+
     return {
       success: true,
       message: "Emitentes encontrados com sucesso",
-      data: emitentes as unknown as MdfeEmitente[],
+      data: serializedEmitentes as unknown as MdfeEmitente[],
     };
   } catch (error) {
     console.error(`Erro ao buscar emitentes da empresa ${empresaId}:`, error);
@@ -568,10 +598,16 @@ export async function getMdfeEmitentesByUf(
       .toArray();
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB documents for Client Components
+    const serializedEmitentes = emitentes.map((emitente) => ({
+      ...emitente,
+      _id: emitente._id.toString(),
+    }));
+
     return {
       success: true,
       message: "Emitentes encontrados com sucesso",
-      data: emitentes as unknown as MdfeEmitente[],
+      data: serializedEmitentes as unknown as MdfeEmitente[],
     };
   } catch (error) {
     console.error(`Erro ao buscar emitentes do estado ${uf}:`, error);

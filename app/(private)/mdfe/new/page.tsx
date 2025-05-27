@@ -285,6 +285,28 @@ export default function NewMdfePage() {
       return;
     }
 
+    // Validar se existe pelo menos uma nota adicionada
+    const hasDocuments = () => {
+      const docs = formData.informacoes_dos_documentos;
+      if (!docs) return false;
+
+      const nfeCount = docs.nfe?.length || 0;
+      const cteCount = docs.cte?.length || 0;
+      const mdfCount = docs.mdf?.length || 0;
+
+      return nfeCount > 0 || cteCount > 0 || mdfCount > 0;
+    };
+
+    if (!hasDocuments()) {
+      toast({
+        title: "Erro de Validação",
+        description:
+          "É necessário adicionar pelo menos uma nota fiscal (NF-e, CT-e ou MDF-e) antes de emitir o MDF-e.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     startTransition(async () => {
       try {
         console.log("Emitindo MDF-e com os seguintes dados:", formData);

@@ -14,7 +14,14 @@ export async function getAllEmpresas() {
     .find({ id_tenant: user.id_tenant })
     .toArray();
   await TMongo.mongoDisconnect(client);
-  return response;
+
+  // Serialize MongoDB documents for Client Components
+  const serializedResponse = response.map((empresa) => ({
+    ...empresa,
+    _id: empresa._id.toString(),
+  }));
+
+  return serializedResponse;
 }
 
 export async function getEmpresaById(id: Number) {
@@ -24,6 +31,14 @@ export async function getEmpresaById(id: Number) {
     .collection("empresa")
     .findOne({ id: Number(id), id_tenant: user.id_tenant });
   await TMongo.mongoDisconnect(client);
+
+  // Serialize MongoDB document for Client Components
+  if (response) {
+    return {
+      ...response,
+      _id: response._id.toString(),
+    };
+  }
   return response;
 }
 
@@ -63,6 +78,14 @@ export async function getEmpresaByCnpj(cnpj: String) {
     .collection("empresa")
     .findOne({ cpfcnpj: cnpj, id_tenant: user.id_tenant });
   await TMongo.mongoDisconnect(client);
+
+  // Serialize MongoDB document for Client Components
+  if (response) {
+    return {
+      ...response,
+      _id: response._id.toString(),
+    };
+  }
   return response;
 }
 

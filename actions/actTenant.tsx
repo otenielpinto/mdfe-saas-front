@@ -84,10 +84,16 @@ export async function getTenantById(id: string): Promise<TenantResponse> {
     await TMongo.mongoDisconnect(client);
 
     if (tenant) {
+      // Serialize MongoDB document for Client Components
+      const serializedTenant = {
+        ...tenant,
+        _id: tenant._id.toString(),
+      };
+
       return {
         success: true,
         message: "Tenant encontrado",
-        data: tenant as Tenant,
+        data: serializedTenant as Tenant,
       };
     }
 
@@ -150,10 +156,16 @@ export async function getTenants(
 
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB documents for Client Components
+    const serializedTenants = tenants.map((tenant) => ({
+      ...tenant,
+      _id: tenant._id.toString(),
+    }));
+
     return {
       success: true,
       message: `${tenants.length} tenant(s) encontrado(s)`,
-      data: tenants as Tenant[],
+      data: serializedTenants as Tenant[],
     };
   } catch (error) {
     console.error("Error getting tenants:", error);
@@ -216,10 +228,18 @@ export async function updateTenant(
 
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB document for Client Components
+    const serializedTenant = updatedTenant
+      ? {
+          ...updatedTenant,
+          _id: updatedTenant._id.toString(),
+        }
+      : null;
+
     return {
       success: true,
       message: "Tenant atualizado com sucesso",
-      data: updatedTenant as Tenant,
+      data: serializedTenant as Tenant,
     };
   } catch (error) {
     console.error("Error updating tenant:", error);
@@ -306,10 +326,16 @@ export async function getTenantByDomain(
     await TMongo.mongoDisconnect(client);
 
     if (tenant) {
+      // Serialize MongoDB document for Client Components
+      const serializedTenant = {
+        ...tenant,
+        _id: tenant._id.toString(),
+      };
+
       return {
         success: true,
         message: "Tenant encontrado",
-        data: tenant as Tenant,
+        data: serializedTenant as Tenant,
       };
     }
 
@@ -373,10 +399,18 @@ export async function updateTenantStatus(
 
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB document for Client Components
+    const serializedTenant = updatedTenant
+      ? {
+          ...updatedTenant,
+          _id: updatedTenant._id.toString(),
+        }
+      : null;
+
     return {
       success: true,
       message: "Status do tenant atualizado com sucesso",
-      data: updatedTenant as Tenant,
+      data: serializedTenant as Tenant,
     };
   } catch (error) {
     console.error("Error updating tenant status:", error);

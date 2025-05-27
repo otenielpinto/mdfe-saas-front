@@ -2,7 +2,10 @@
 
 import { TMongo } from "@/infra/mongoClient";
 import { ObjectId } from "mongodb";
-import { MdfeCertificado, MdfeCertificadoResponse } from "@/types/MdfeCertificadoTypes";
+import {
+  MdfeCertificado,
+  MdfeCertificadoResponse,
+} from "@/types/MdfeCertificadoTypes";
 
 /**
  * Get all MDF-e certificates
@@ -18,7 +21,7 @@ export async function getAllMdfeCertificados(): Promise<MdfeCertificadoResponse>
     await TMongo.mongoDisconnect(client);
 
     // Don't return the binary data in the list view
-    const certificadosSemArquivo = certificados.map(cert => {
+    const certificadosSemArquivo = certificados.map((cert) => {
       const { arquivo_stream, ...certSemArquivo } = cert;
       return certSemArquivo;
     });
@@ -99,10 +102,16 @@ export async function getMdfeCertificadoByObjectId(
       };
     }
 
+    // Serialize MongoDB document for Client Components
+    const serializedCertificado = {
+      ...certificado,
+      _id: certificado._id.toString(),
+    };
+
     return {
       success: true,
       message: "Certificado encontrado com sucesso",
-      data: certificado as MdfeCertificado,
+      data: serializedCertificado as MdfeCertificado,
     };
   } catch (error) {
     console.error(`Erro ao buscar certificado com ObjectId ${id}:`, error);

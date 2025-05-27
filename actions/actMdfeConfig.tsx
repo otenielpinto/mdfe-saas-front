@@ -38,12 +38,20 @@ export async function getMdfeConfig(): Promise<MdfeConfigResponse> {
     const config = await clientdb.collection("mdfe_config").findOne(query);
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB document for Client Components
+    const serializedConfig = config
+      ? {
+          ...config,
+          _id: config._id.toString(),
+        }
+      : null;
+
     return {
       success: true,
       message: config
         ? "Configuração encontrada"
         : "Nenhuma configuração encontrada",
-      data: config || null,
+      data: serializedConfig,
     };
   } catch (error) {
     console.error("Error getting MDFe configs:", error);
@@ -89,10 +97,18 @@ export async function saveMdfeConfig(data: any): Promise<MdfeConfigResponse> {
 
     await TMongo.mongoDisconnect(client);
 
+    // Serialize MongoDB document for Client Components
+    const serializedUpdatedConfig = updatedConfig
+      ? {
+          ...updatedConfig,
+          _id: updatedConfig._id.toString(),
+        }
+      : null;
+
     return {
       success: true,
       message: "Configuração atualizada com sucesso",
-      data: updatedConfig,
+      data: serializedUpdatedConfig,
     };
   } catch (error) {
     console.error("Error updating MDFe config:", error);

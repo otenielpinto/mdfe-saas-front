@@ -22,7 +22,14 @@ export async function getUserEmpresas(userId: string) {
   const filteredEmpresas = empresas.filter((empresa: any) =>
     user.emp_acesso.includes(Number(empresa.id))
   );
-  const response = filteredEmpresas ? filteredEmpresas : [];
+
+  // Serialize MongoDB documents for Client Components
+  const serializedEmpresas = filteredEmpresas.map((empresa) => ({
+    ...empresa,
+    _id: empresa._id.toString(),
+  }));
+
+  const response = serializedEmpresas ? serializedEmpresas : [];
   await TMongo.mongoDisconnect(client);
   return response;
 }
