@@ -2,7 +2,8 @@
 
 import { TMongo } from "@/infra/mongoClient";
 import { ObjectId } from "mongodb";
-import { MdfeEnvio, MdfeResponse } from "@/types/MdfeEnvioTypes";
+import { MdfeResponse } from "@/types/MdfeEnvioTypes";
+import { getUser } from "@/actions/actSession";
 
 const collectionName = "mdfe_envio";
 
@@ -11,9 +12,21 @@ const collectionName = "mdfe_envio";
  * @returns Response with array of MDFe
  */
 export async function getAllMdfe(): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const mdfes = await clientdb.collection(collectionName).find({}).toArray();
+    const mdfes = await clientdb
+      .collection(collectionName)
+      .find({ id_tenant: Number(user.id_tenant) })
+      .toArray();
     await TMongo.mongoDisconnect(client);
 
     // Serialize MongoDB documents for Client Components
@@ -43,11 +56,21 @@ export async function getAllMdfe(): Promise<MdfeResponse> {
  * @returns Response with MDFe object
  */
 export async function getMdfeById(id: string): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const mdfe = await clientdb
-      .collection(collectionName)
-      .findOne({ id: String(id) });
+    const mdfe = await clientdb.collection(collectionName).findOne({
+      id: String(id),
+      id_tenant: Number(user.id_tenant),
+    });
     await TMongo.mongoDisconnect(client);
 
     if (!mdfe) {
@@ -85,11 +108,21 @@ export async function getMdfeById(id: string): Promise<MdfeResponse> {
  * @returns Response with MDFe object
  */
 export async function getMdfeByObjectId(id: string): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const mdfe = await clientdb
-      .collection(collectionName)
-      .findOne({ _id: new ObjectId(id) });
+    const mdfe = await clientdb.collection(collectionName).findOne({
+      _id: new ObjectId(id),
+      id_tenant: Number(user.id_tenant),
+    });
     await TMongo.mongoDisconnect(client);
 
     if (!mdfe) {
@@ -127,9 +160,21 @@ export async function getMdfeByObjectId(id: string): Promise<MdfeResponse> {
  * @returns Response with MDFe object
  */
 export async function getMdfeByChave(chave: string): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
-    const mdfe = await clientdb.collection(collectionName).findOne({ chave });
+    const mdfe = await clientdb.collection(collectionName).findOne({
+      chave,
+      id_tenant: Number(user.id_tenant),
+    });
     await TMongo.mongoDisconnect(client);
 
     if (!mdfe) {
@@ -161,15 +206,26 @@ export async function getMdfeByChave(chave: string): Promise<MdfeResponse> {
  * @returns Response with created MDFe
  */
 export async function createMdfe(data: any): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Add timestamps
     const dataWithTimestamps = {
       ...data,
-      status: "DIGITADO",
+      status: "Em digitacao",
       createdAt: new Date(),
       updatedAt: new Date(),
+      id_tenant: Number(user.id_tenant),
+      id_empresa: Number(user.id_empresa),
     };
 
     const result = await clientdb
@@ -205,13 +261,23 @@ export async function updateMdfe(
   id: string,
   data: Partial<any>
 ): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if MDFe exists
-    const existingMdfe = await clientdb
-      .collection(collectionName)
-      .findOne({ id: id });
+    const existingMdfe = await clientdb.collection(collectionName).findOne({
+      id: id,
+      id_tenant: Number(user.id_tenant),
+    });
 
     if (!existingMdfe) {
       await TMongo.mongoDisconnect(client);
@@ -228,9 +294,13 @@ export async function updateMdfe(
       updatedAt: new Date(),
     };
 
-    await clientdb
-      .collection(collectionName)
-      .updateOne({ id: String(id) }, { $set: dataWithTimestamp });
+    await clientdb.collection(collectionName).updateOne(
+      {
+        id: String(id),
+        id_tenant: Number(user.id_tenant),
+      },
+      { $set: dataWithTimestamp }
+    );
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -261,13 +331,23 @@ export async function updateMdfeByObjectId(
   id: string,
   data: Partial<any>
 ): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if MDFe exists
-    const existingMdfe = await clientdb
-      .collection(collectionName)
-      .findOne({ _id: new ObjectId(id) });
+    const existingMdfe = await clientdb.collection(collectionName).findOne({
+      _id: new ObjectId(id),
+      id_tenant: Number(user.id_tenant),
+    });
 
     if (!existingMdfe) {
       await TMongo.mongoDisconnect(client);
@@ -284,9 +364,13 @@ export async function updateMdfeByObjectId(
       updatedAt: new Date(),
     };
 
-    await clientdb
-      .collection(collectionName)
-      .updateOne({ _id: new ObjectId(id) }, { $set: dataWithTimestamp });
+    await clientdb.collection(collectionName).updateOne(
+      {
+        _id: new ObjectId(id),
+        id_tenant: Number(user.id_tenant),
+      },
+      { $set: dataWithTimestamp }
+    );
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -295,7 +379,7 @@ export async function updateMdfeByObjectId(
       data: {
         ...existingMdfe,
         ...dataWithTimestamp,
-      } as unknown as Mdfe,
+      },
     };
   } catch (error) {
     console.error(`Erro ao atualizar MDFe com ObjectId ${id}:`, error);
@@ -313,13 +397,23 @@ export async function updateMdfeByObjectId(
  * @returns Response with delete result
  */
 export async function deleteMdfe(id: string): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if MDFe exists
-    const existingMdfe = await clientdb
-      .collection(collectionName)
-      .findOne({ id: String(id) });
+    const existingMdfe = await clientdb.collection(collectionName).findOne({
+      id: String(id),
+      id_tenant: Number(user.id_tenant),
+    });
 
     if (!existingMdfe) {
       await TMongo.mongoDisconnect(client);
@@ -330,7 +424,10 @@ export async function deleteMdfe(id: string): Promise<MdfeResponse> {
       };
     }
 
-    await clientdb.collection(collectionName).deleteOne({ id: String(id) });
+    await clientdb.collection(collectionName).deleteOne({
+      id: String(id),
+      id_tenant: Number(user.id_tenant),
+    });
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -354,13 +451,23 @@ export async function deleteMdfe(id: string): Promise<MdfeResponse> {
  * @returns Response with delete result
  */
 export async function deleteMdfeByObjectId(id: string): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 
     // Check if MDFe exists
-    const existingMdfe = await clientdb
-      .collection(collectionName)
-      .findOne({ _id: new ObjectId(id) });
+    const existingMdfe = await clientdb.collection(collectionName).findOne({
+      _id: new ObjectId(id),
+      id_tenant: Number(user.id_tenant),
+    });
 
     if (!existingMdfe) {
       await TMongo.mongoDisconnect(client);
@@ -371,9 +478,10 @@ export async function deleteMdfeByObjectId(id: string): Promise<MdfeResponse> {
       };
     }
 
-    await clientdb
-      .collection(collectionName)
-      .deleteOne({ _id: new ObjectId(id) });
+    await clientdb.collection(collectionName).deleteOne({
+      _id: new ObjectId(id),
+      id_tenant: Number(user.id_tenant),
+    });
     await TMongo.mongoDisconnect(client);
 
     return {
@@ -399,11 +507,23 @@ export async function deleteMdfeByObjectId(id: string): Promise<MdfeResponse> {
 export async function getMdfesByEmpresa(
   empresaId: number
 ): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     const mdfes = await clientdb
       .collection(collectionName)
-      .find({ empresa: Number(empresaId) })
+      .find({
+        empresa: Number(empresaId),
+        id_tenant: Number(user.id_tenant),
+      })
       .sort({ createdAt: -1 })
       .toArray();
     await TMongo.mongoDisconnect(client);
@@ -433,11 +553,23 @@ export async function updateMdfeStatus(
   id: string,
   status: string
 ): Promise<MdfeResponse> {
+  const user = await getUser();
+  if (!user?.id_tenant) {
+    return {
+      success: false,
+      message: "Usuário não autenticado ou sem tenant associado",
+      error: "UNAUTHORIZED",
+    };
+  }
+
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
     let filter;
 
-    filter = { id: String(id) };
+    filter = {
+      id: String(id),
+      id_tenant: Number(user.id_tenant),
+    };
 
     // Check if MDFe exists
     const existingMdfe = await clientdb
