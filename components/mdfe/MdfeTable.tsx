@@ -39,35 +39,35 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Mdfe } from "@/types/MdfeEnvioTypes";
+import { MdfeDocument } from "@/types/MdfeEnvioTypes";
 import { Badge } from "@/components/ui/badge";
 import { updateMdfeStatus } from "@/actions/actMdfeEnvio";
 import { useToast } from "@/components/ui/use-toast";
 
 interface MdfeTableProps {
-  mdfes: Mdfe[];
+  mdfes: MdfeDocument[];
 }
 
 export default function MdfeTable({ mdfes }: MdfeTableProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [selectedMdfe, setSelectedMdfe] = useState<Mdfe | null>(null);
+  const [selectedMdfe, setSelectedMdfe] = useState<MdfeDocument | null>(null);
 
-  const handleViewMdfe = (mdfe: Mdfe) => {
+  const handleViewMdfe = (mdfe: MdfeDocument) => {
     router.push(`/mdfe/view/${mdfe._id}`);
   };
 
-  const handleEditMdfe = (mdfe: Mdfe) => {
+  const handleEditMdfe = (mdfe: MdfeDocument) => {
     router.push(`/mdfe/edit/${mdfe._id}`);
   };
 
-  const handleDeleteDialog = (mdfe: Mdfe) => {
+  const handleDeleteDialog = (mdfe: MdfeDocument) => {
     setSelectedMdfe(mdfe);
     setOpenDeleteDialog(true);
   };
 
-  const handleStatusChange = async (mdfe: Mdfe, status: string) => {
+  const handleStatusChange = async (mdfe: MdfeDocument, status: string) => {
     try {
       const id = mdfe._id?.toString() || mdfe.id;
       if (!id) {
@@ -108,6 +108,10 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
     switch (status?.toUpperCase()) {
       case "CRIADO":
         return <Badge variant="outline">Criado</Badge>;
+      case "DIGITADO":
+        return <Badge variant="outline">Digitado</Badge>;
+      case "PROCESSANDO":
+        return <Badge variant="secondary">Processando</Badge>;
       case "ENVIADO":
         return <Badge variant="secondary">Enviado</Badge>;
       case "AUTORIZADO":
@@ -148,26 +152,66 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
     }
   };
 
+  const formatDateTime = (dateTimeString: string | undefined) => {
+    if (!dateTimeString) return "N/A";
+
+    try {
+      const dateObj = new Date(dateTimeString);
+      return dateObj.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "America/Sao_Paulo",
+      });
+    } catch (error) {
+      return "Data inválida";
+    }
+  };
+
+  const formatCurrency = (value: number | string | undefined) => {
+    if (!value) return "R$ 0,00";
+
+    const numValue = typeof value === "string" ? parseFloat(value) : value;
+    if (isNaN(numValue)) return "R$ 0,00";
+
+    return numValue.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  const formatQuantity = (value: number | string | undefined) => {
+    if (!value) return "0";
+
+    const numValue = typeof value === "string" ? parseInt(value) : value;
+    if (isNaN(numValue)) return "0";
+
+    return numValue.toString();
+  };
+
   return (
     <>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>ID</TableHead>
+              <TableHead>Data/Hora Emissão</TableHead>
               <TableHead>Série/Número</TableHead>
               <TableHead>Emitente</TableHead>
               <TableHead>UF Origem</TableHead>
               <TableHead>UF Destino</TableHead>
+              <TableHead>Valor Carga</TableHead>
+              <TableHead>Qtd NFe</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Data</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {mdfes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center">
+                <TableCell colSpan={9} className="text-center">
                   Nenhum MDF-e encontrado
                 </TableCell>
               </TableRow>
@@ -175,19 +219,23 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
               mdfes.map((mdfe) => (
                 <TableRow key={mdfe._id?.toString() || mdfe.id?.toString()}>
                   <TableCell className="font-medium">
-                    {mdfe.id || "N/A"}
+                    {mdfe.dados?.dhEmi} {mdfe.dados?.hora}
                   </TableCell>
                   <TableCell>
-                    {mdfe.infMDFe?.ide?.serie && mdfe.infMDFe.ide.nMDF
-                      ? `${mdfe.infMDFe.ide.serie}/${mdfe.infMDFe.ide.nMDF}`
+                    {mdfe.dados?.serie && mdfe.dados.numero
+                      ? `${mdfe.dados.serie}/${mdfe.dados.numero}`
                       : "N/A"}
                   </TableCell>
-                  <TableCell>{mdfe.infMDFe?.emit?.xNome || "N/A"}</TableCell>
-                  <TableCell>{mdfe.infMDFe?.ide?.UFIni || "N/A"}</TableCell>
-                  <TableCell>{mdfe.infMDFe?.ide?.UFFim || "N/A"}</TableCell>
-
+                  <TableCell>{mdfe.emitente?.xNome || "N/A"}</TableCell>
+                  <TableCell>{mdfe.dados?.ufIni || "N/A"}</TableCell>
+                  <TableCell>{mdfe.dados?.ufFim || "N/A"}</TableCell>
+                  <TableCell>
+                    {formatCurrency(mdfe.totalizadores?.vCarga)}
+                  </TableCell>
+                  <TableCell>
+                    {formatQuantity(mdfe.totalizadores?.qNFe)}
+                  </TableCell>
                   <TableCell>{getStatusBadge(mdfe.status)}</TableCell>
-                  <TableCell>{formatDate(mdfe.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -215,10 +263,12 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
                         </DropdownMenuItem>
                         <DropdownMenuLabel>Status</DropdownMenuLabel>
                         <DropdownMenuItem
-                          onClick={() => handleStatusChange(mdfe, "ENVIADO")}
+                          onClick={() =>
+                            handleStatusChange(mdfe, "PROCESSANDO")
+                          }
                         >
                           <FilePlus2 className="mr-2 h-4 w-4" />
-                          Marcar como Enviado
+                          Marcar como Processando
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => handleStatusChange(mdfe, "AUTORIZADO")}
@@ -248,9 +298,8 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o MDF-e{" "}
-              {selectedMdfe?.infMDFe?.ide?.serie &&
-              selectedMdfe.infMDFe.ide.nMDF
-                ? `${selectedMdfe.infMDFe.ide.serie}/${selectedMdfe.infMDFe.ide.nMDF}`
+              {selectedMdfe?.dados?.serie && selectedMdfe.dados.numero
+                ? `${selectedMdfe.dados.serie}/${selectedMdfe.dados.numero}`
                 : selectedMdfe?.id || "selecionado"}
               ? Esta ação não pode ser desfeita.
             </AlertDialogDescription>

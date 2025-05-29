@@ -6,6 +6,7 @@ import { MdfeResponse, MdfeStatus } from "@/types/MdfeEnvioTypes";
 import { getUser } from "@/actions/actSession";
 import { MdfeSearchForm } from "@/types/MdfeSearchFormTypes";
 import { getBrazilDateTime, formatDateTimeBrazil } from "@/lib/brazil-datetime";
+import { lib } from "@/lib/lib";
 
 const collectionName = "mdfe_envio";
 
@@ -44,17 +45,16 @@ export async function getAllMdfe(data: MdfeSearchForm): Promise<MdfeResponse> {
 
   // Date range filter for emission period
   if (periodoEmissaoInicio || periodoEmissaoFim) {
-    filter["dados.dhEmi"] = {};
+    filter["dados.dtEmi"] = {};
     if (periodoEmissaoInicio) {
-      // Convert YYYY-MM-DD to DD/MM/YYYY for comparison
-      const [year, month, day] = periodoEmissaoInicio.split("-");
-      const dateStr = `${day}/${month}/${year}`;
-      filter["dados.dhEmi"].$gte = dateStr;
+      const dtEmiStart = getBrazilDateTime(periodoEmissaoInicio);
+      dtEmiStart.setUTCDate(dtEmiStart.getUTCDate() + 1); // Adjust to start of day
+      filter["dados.dtEmi"].$gte = lib.setUTCHoursStart(dtEmiStart);
     }
     if (periodoEmissaoFim) {
-      const [year, month, day] = periodoEmissaoFim.split("-");
-      const dateStr = `${day}/${month}/${year}`;
-      filter["dados.dhEmi"].$lte = dateStr;
+      const dtEmiEnd = getBrazilDateTime(periodoEmissaoFim);
+      dtEmiEnd.setUTCDate(dtEmiEnd.getUTCDate() + 1); // Adjust to start of day
+      filter["dados.dtEmi"].$lte = lib.setUTCHoursEnd(dtEmiEnd);
     }
   }
 

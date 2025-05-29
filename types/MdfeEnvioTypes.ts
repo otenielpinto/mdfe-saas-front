@@ -56,6 +56,8 @@ export interface MdfeDocument {
     cMDF: string;
     cDV: string;
     dhEmi: string;
+    dtEmi: Date;
+    hora: string;
     tpModal: ModalType;
     ufIni: string;
     ufFim: string;
