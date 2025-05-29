@@ -55,11 +55,14 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
   const [selectedMdfe, setSelectedMdfe] = useState<MdfeDocument | null>(null);
 
   const handleViewMdfe = (mdfe: MdfeDocument) => {
-    router.push(`/mdfe/view/${mdfe._id}`);
+    router.push(`/mdfe/view/${mdfe.id}`);
   };
 
   const handleEditMdfe = (mdfe: MdfeDocument) => {
-    router.push(`/mdfe/edit/${mdfe._id}`);
+    const id = mdfe.id;
+    if (id) {
+      router.push(`/mdfe/new?id=${id}`);
+    }
   };
 
   const handleDeleteDialog = (mdfe: MdfeDocument) => {
@@ -69,7 +72,7 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
 
   const handleStatusChange = async (mdfe: MdfeDocument, status: string) => {
     try {
-      const id = mdfe._id?.toString() || mdfe.id;
+      const id = mdfe.id || mdfe._id?.toString();
       if (!id) {
         toast({
           title: "Erro",
@@ -310,7 +313,10 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
               className="bg-red-600 hover:bg-red-700"
               onClick={() => {
                 if (selectedMdfe) {
-                  router.push(`/mdfe/delete/${selectedMdfe._id}`);
+                  const id = selectedMdfe.id;
+                  if (id) {
+                    router.push(`/mdfe/delete/${id}`);
+                  }
                 }
               }}
             >

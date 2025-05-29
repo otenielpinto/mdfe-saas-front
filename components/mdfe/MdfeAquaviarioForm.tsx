@@ -14,14 +14,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface MdfeAquaviarioFormProps {
   onSubmit: (data: any) => void;
+  initialData?: any;
 }
 
-export function MdfeAquaviarioForm({ onSubmit }: MdfeAquaviarioFormProps) {
+export function MdfeAquaviarioForm({
+  onSubmit,
+  initialData,
+}: MdfeAquaviarioFormProps) {
   const [formData, setFormData] = useState({
-    irin: "",
-    nomeEmbarcacao: "",
-    codigoEmbarcacao: "",
-    balsa: [],
+    irin: initialData?.irin || "",
+    nomeEmbarcacao: initialData?.nomeEmbarcacao || "",
+    codigoEmbarcacao: initialData?.codigoEmbarcacao || "",
+    balsa: initialData?.balsa || [],
   });
 
   const [novaBalsa, setNovaBalsa] = useState({

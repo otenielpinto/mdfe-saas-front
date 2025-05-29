@@ -1,13 +1,23 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
+import { useState, useRef, useEffect, useTransition, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Wand2, Save, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Wand2,
+  Save,
+  Trash2,
+  Edit,
+  AlertCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 import { getMdfeConfig } from "@/actions/actMdfeConfig";
 import { getAllMdfeEmitentes } from "@/actions/actMdfeEmitente";
+import { getMdfeById, createMdfe, updateMdfe } from "@/actions/actMdfeEnvio";
 import { MdfeEmitenteForm } from "@/components/mdfe/MdfeEmitenteForm";
 import { MdfeDadosForm } from "@/components/mdfe/MdfeDadosForm";
 import { MdfeRodoviarioForm } from "@/components/mdfe/MdfeRodoviarioForm";
@@ -15,7 +25,11 @@ import { MdfeAquaviarioForm } from "@/components/mdfe/MdfeAquaviarioForm";
 import { MdfeDocumentosForm } from "@/components/mdfe/MdfeDocumentosForm";
 import { MdfeTotalizadoresForm } from "@/components/mdfe/MdfeTotalizadoresForm";
 import { MdfeInformacoesAdicionaisForm } from "@/components/mdfe/MdfeInformacoesAdicionaisForm";
-import { createMdfe } from "@/actions/actMdfeEnvio";
+import {
+  MdfeFormData,
+  MdfeFormMode,
+  MdfeResponse,
+} from "@/types/MdfeEnvioTypes";
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import { lib } from "@/lib/lib";
@@ -31,222 +45,295 @@ const steps = [
 ];
 
 export default function NewMdfePage() {
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("id");
+  const isEditMode: boolean = Boolean(editId);
+  const mode: MdfeFormMode = isEditMode ? "edit" : "create";
+
   const [currentStep, setCurrentStep] = useState(0);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<MdfeFormData | any>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMdfe, setIsLoadingMdfe] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
   const router = useRouter();
 
-  // Carregar dados de configuração padrão ao inicializar
-  useEffect(() => {
-    const loadDefaultConfig = async () => {
+  // Optimize loadMdfeForEdit with useCallback to prevent unnecessary re-renders
+  const loadMdfeForEdit = useCallback(
+    async (id: string) => {
       try {
-        setIsLoading(true);
+        setIsLoadingMdfe(true);
+        console.log("Loading MDFe for edit, ID:", id);
 
-        let [configResponse, emitenteResponse] = await Promise.all([
-          getMdfeConfig(),
-          getAllMdfeEmitentes(),
-        ]);
+        const response = await getMdfeById(id);
 
-        if (configResponse.success && configResponse.data) {
-          const config = configResponse.data;
-          //gerar numero aleatorio para cMDF com 8 dígitos
-          const cMDF = String(Math.floor(Math.random() * 1000000)).padStart(
-            8,
-            "0"
-          );
+        if (response.success && response.data) {
+          const mdfeData = response.data;
 
-          const defaultFormData: any = {
-            id: uuidv4(),
-            dt_movto: new Date(),
+          // Convert and format date fields for form inputs
+          const processedData = {
+            ...mdfeData,
             dados: {
-              cUF: config.cUF?.toString() || "",
-              tpEmit: config.tpEmit?.toString() || "1",
-              tpTransp: config.tpTransp?.toString() || "1",
-              tpAmb: config.tpAmb?.toString() || "2",
-              tpEmis: config.tpEmis?.toString() || "1",
-              mod: config.mod?.toString() || "58",
-              serie: config.serie?.toString() || "1",
-              numero: "",
-              cMDF: cMDF,
-              cDV: "",
-              dhEmi: lib.formatDateForInput(new Date()),
-              dtEmi: new Date(),
-              hora: new Date().toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              }),
-              tpModal: config.modal?.toString() || "1",
-              ufIni: config.UFIni || "",
-              ufFim: config.UFFim || "",
-              dhIniViagem: "",
-              infMunCarrega:
-                config.infMunCarrega && config.infMunCarrega.length > 0
-                  ? config.infMunCarrega
-                  : [{ cMunCarrega: "", xMunCarrega: "" }],
-              infPercurso:
-                config.infPercurso && config.infPercurso.length > 0
-                  ? config.infPercurso.map((p: any) => p.UFPer).join(", ")
-                  : "",
+              ...mdfeData.dados,
+              dhEmi: mdfeData.dados?.dhEmi
+                ? lib.formatDateForInput(new Date(mdfeData.dados.dhEmi))
+                : lib.formatDateForInput(new Date()),
+              dtEmi: mdfeData.dados?.dtEmi
+                ? new Date(mdfeData.dados.dtEmi)
+                : new Date(),
+              hora:
+                mdfeData.dados?.hora ||
+                new Date().toLocaleTimeString("pt-BR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                }),
             },
-            rodoviario: {
-              // Campos do veículo
-              codigoAgregacao: config.codigoAgregacao || "",
-              placaVeiculo: config.placaVeiculo || "",
-              renavam: config.renavam || "",
-              tara: config.tara || "",
-              capacidadeKG: config.capacidadeKG || "",
-              capacidadeM3: config.capacidadeM3 || "",
-              tpCar: config.tpCar || "",
-              tpRod: config.tpRod || "",
-
-              // Campos do motorista
-              condutores: [
-                { xNome: config.xNome || "", cpf: config.cpf || "" },
-              ],
-            },
-            informacoes_dos_documentos: {
-              municipioCarregamento: config.municipioCarregamento || "",
-              municipioDescarregamento: config.municipioDescarregamento || "",
-            },
-            totalizadores: {} as any, // Inicializar como objeto vazio
-            informacoes_adicionais: {
-              infAdFisco: "",
-              infCpl: "",
-            },
-            referencia: {},
-            status: "RASCUNHO",
-            qrCodMDFe: "",
-            chave: "",
-            emitente: {}, // Inicializar emitente vazio
           };
 
-          // Se houver emitentes disponíveis, preencher com o primeiro emitente
-          if (
-            emitenteResponse.success &&
-            emitenteResponse.data &&
-            Array.isArray(emitenteResponse.data) &&
-            emitenteResponse.data.length > 0
-          ) {
-            const primeiroEmitente = emitenteResponse.data[0];
+          setFormData(processedData);
 
-            defaultFormData.emitente = {
-              CNPJ: primeiroEmitente.cpfcnpj || "",
-              IE: primeiroEmitente.ie || "",
-              xNome: primeiroEmitente.razao_social || "",
-              xFant: primeiroEmitente.fantasia || "",
-              enderEmit: {
-                xLgr: primeiroEmitente.logradouro || "",
-                nro: primeiroEmitente.numero || "",
-                xCpl: primeiroEmitente.complemento || "",
-                xBairro: primeiroEmitente.bairro || "",
-                cMun: primeiroEmitente.codigo_municipio?.toString() || "",
-                xMun: primeiroEmitente.nome_municipio || "",
-                CEP: primeiroEmitente.cep || "",
-                UF: primeiroEmitente.uf || "",
-                fone: primeiroEmitente.telefone || "",
-                email: primeiroEmitente.email || "",
-              },
-            };
-          } else {
-            toast({
-              title: "Nenhum Emitente Encontrado",
-              description:
-                "Nenhum emitente cadastrado encontrado. Por favor, cadastre um emitente antes de continuar.",
-            });
-          }
-          setFormData(defaultFormData);
+          toast({
+            title: "MDFe Carregado",
+            description: `MDFe "${
+              mdfeData.dados?.numero || mdfeData.id
+            }" carregado para edição.`,
+          });
 
-          console.log("Configuração padrão carregada:", defaultFormData);
+          console.log("MDFe data loaded for edit:", processedData);
         } else {
-          console.log("Nenhuma configuração encontrada, usando valores padrão");
-          // Definir valores padrão mínimos se não houver configuração
-          const defaultFormData: any = {
-            dados: {
-              cUF: "",
-              tpEmit: "1",
-              tpTransp: "1",
-              tpAmb: "2",
-              tpEmis: "1",
-              mod: "58",
-              serie: "1",
-              numero: "",
-              cMDF: "",
-              cDV: "",
-              dhEmi: lib.formatDateForInput(new Date()),
-              dtEmi: new Date(),
-              hora: new Date().toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              }),
+          toast({
+            title: "Erro ao carregar MDFe",
+            description:
+              response.message ||
+              "MDFe não encontrado. Redirecionando para modo de criação.",
+            variant: "destructive",
+          });
 
-              tpModal: "1",
-              ufIni: "",
-              ufFim: "",
-              dhIniViagem: "",
-              infMunCarrega: [{ cMunCarrega: "", xMunCarrega: "" }],
-              infPercurso: "",
-            },
-          };
-
-          // Tentar preencher emitente mesmo sem configuração
-          if (
-            emitenteResponse.success &&
-            emitenteResponse.data &&
-            Array.isArray(emitenteResponse.data) &&
-            emitenteResponse.data.length > 0
-          ) {
-            const primeiroEmitente = emitenteResponse.data[0];
-
-            defaultFormData.emitente = {
-              CNPJ: primeiroEmitente.cpfcnpj || "",
-              IE: primeiroEmitente.ie || "",
-              xNome: primeiroEmitente.razao_social || "",
-              xFant: primeiroEmitente.fantasia || "",
-              enderEmit: {
-                xLgr: primeiroEmitente.logradouro || "",
-                nro: primeiroEmitente.numero || "",
-                xCpl: primeiroEmitente.complemento || "",
-                xBairro: primeiroEmitente.bairro || "",
-                cMun: primeiroEmitente.codigo_municipio?.toString() || "",
-                xMun: primeiroEmitente.nome_municipio || "",
-                CEP: primeiroEmitente.cep || "",
-                UF: primeiroEmitente.uf || "",
-                fone: primeiroEmitente.telefone || "",
-                email: primeiroEmitente.email || "",
-              },
-            };
-
-            toast({
-              title: "Sucesso",
-              description: `Emitente "${primeiroEmitente.razao_social}" carregado com sucesso.`,
-            });
-          } else {
-            toast({
-              title: "Nenhum Emitente Encontrado",
-              description:
-                "Nenhum emitente cadastrado encontrado. Por favor, cadastre um emitente antes de continuar.",
-            });
-          }
-
-          setFormData(defaultFormData);
+          // Fallback to creation mode if MDFe not found
+          router.replace("/mdfe/new");
         }
       } catch (error) {
-        console.error("Erro ao carregar configuração:", error);
+        console.error("Error loading MDFe for edit:", error);
         toast({
           title: "Erro",
-          description: "Erro ao carregar configuração padrão.",
+          description: "Erro inesperado ao carregar MDFe para edição.",
+          variant: "destructive",
         });
+
+        // Fallback to creation mode on error
+        router.replace("/mdfe/new");
       } finally {
-        setIsLoading(false);
+        setIsLoadingMdfe(false);
+      }
+    },
+    [router, toast]
+  );
+
+  // Optimize loadDefaultConfig with useCallback
+  const loadDefaultConfig = useCallback(async () => {
+    try {
+      const [configResponse, emitenteResponse] = await Promise.all([
+        getMdfeConfig(),
+        getAllMdfeEmitentes(),
+      ]);
+
+      if (configResponse.success && configResponse.data) {
+        const config = configResponse.data;
+        const cMDF = String(Math.floor(Math.random() * 1000000)).padStart(
+          8,
+          "0"
+        );
+
+        const defaultFormData: MdfeFormData = {
+          id_empresa: config.id_empresa || 0,
+          id_tenant: config.id_tenant || 0,
+          id: uuidv4(),
+          dt_movto: new Date(),
+          dados: {
+            cUF: config.cUF?.toString() || "",
+            tpEmit: config.tpEmit?.toString() || "1",
+            tpTransp: config.tpTransp?.toString() || "1",
+            tpAmb: config.tpAmb?.toString() || "2",
+            tpEmis: config.tpEmis?.toString() || "1",
+            mod: config.mod?.toString() || "58",
+            serie: config.serie?.toString() || "1",
+            numero: "",
+            cMDF: cMDF,
+            cDV: "",
+            dhEmi: lib.formatDateForInput(new Date()),
+            dtEmi: new Date(),
+            hora: new Date().toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            }),
+            tpModal: config.modal?.toString() || "1",
+            ufIni: config.UFIni || "",
+            ufFim: config.UFFim || "",
+            dhIniViagem: "",
+            indCanalVerde: false,
+            indCarregaPosterior: false,
+            infMunCarrega:
+              config.infMunCarrega && config.infMunCarrega.length > 0
+                ? config.infMunCarrega
+                : [{ cMunCarrega: "", xMunCarrega: "" }],
+            infPercurso:
+              config.infPercurso && config.infPercurso.length > 0
+                ? config.infPercurso.map((p: any) => p.UFPer).join(", ")
+                : "",
+          },
+          rodoviario: {
+            codigoAgregacao: config.codigoAgregacao || "",
+            placaVeiculo: config.placaVeiculo || "",
+            renavam: config.renavam || "",
+            tara: config.tara || "",
+            capacidadeKG: config.capacidadeKG || "",
+            capacidadeM3: config.capacidadeM3 || "",
+            tpCar: config.tpCar || "",
+            tpRod: config.tpRod || "",
+            condutores: [{ xNome: config.xNome || "", cpf: config.cpf || "" }],
+          },
+          informacoes_dos_documentos: {
+            nfe: [],
+            cte: [],
+            mdf: [],
+          },
+          totalizadores: {
+            qCTe: "",
+            qNFe: "",
+            qMDFe: "",
+            vCarga: "",
+            cUnid: "",
+            qCarga: "",
+          },
+          informacoes_adicionais: {
+            infAdFisco: "",
+            infCpl: "",
+          },
+          referencia: {},
+          status: "RASCUNHO" as any,
+          qrCodMDFe: "",
+          chave: "",
+          emitente: {
+            CNPJ: "",
+            IE: "",
+            xNome: "",
+            xFant: "",
+            enderEmit: {
+              xLgr: "",
+              nro: "",
+              xCpl: "",
+              xBairro: "",
+              cMun: "",
+              xMun: "",
+              CEP: "",
+              UF: "",
+              fone: "",
+              email: "",
+            },
+          },
+          aquaviario: {
+            irin: "",
+            nomeEmbarcacao: "",
+            codigoEmbarcacao: "",
+            balsa: [],
+          },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        // Pre-populate emitente if available
+        if (
+          emitenteResponse.success &&
+          emitenteResponse.data &&
+          Array.isArray(emitenteResponse.data) &&
+          emitenteResponse.data.length > 0
+        ) {
+          const primeiroEmitente = emitenteResponse.data[0];
+          defaultFormData.emitente = {
+            CNPJ: primeiroEmitente.cpfcnpj || "",
+            IE: primeiroEmitente.ie || "",
+            xNome: primeiroEmitente.razao_social || "",
+            xFant: primeiroEmitente.fantasia || "",
+            enderEmit: {
+              xLgr: primeiroEmitente.logradouro || "",
+              nro: primeiroEmitente.numero || "",
+              xCpl: primeiroEmitente.complemento || "",
+              xBairro: primeiroEmitente.bairro || "",
+              cMun: primeiroEmitente.codigo_municipio?.toString() || "",
+              xMun: primeiroEmitente.nome_municipio || "",
+              CEP: primeiroEmitente.cep || "",
+              UF: primeiroEmitente.uf || "",
+              fone: primeiroEmitente.telefone || "",
+              email: primeiroEmitente.email || "",
+            },
+          };
+
+          toast({
+            title: "Configuração Carregada",
+            description: `Emitente "${primeiroEmitente.razao_social}" pré-carregado.`,
+          });
+        } else {
+          toast({
+            title: "Nenhum Emitente Encontrado",
+            description:
+              "Nenhum emitente cadastrado. Cadastre um emitente antes de continuar.",
+            variant: "destructive",
+          });
+        }
+
+        setFormData(defaultFormData);
+        console.log("Default configuration loaded:", defaultFormData);
+      } else {
+        console.log("No configuration found, using minimal defaults");
+        toast({
+          title: "Configuração não encontrada",
+          description: "Usando configuração padrão mínima.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error loading default config:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar configuração padrão.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  // Optimized useEffect with proper dependency array and cleanup
+  useEffect(() => {
+    let isMounted = true; // Prevent state updates if component unmounts
+
+    const loadData = async () => {
+      if (!isMounted) return;
+
+      setIsLoading(true);
+
+      try {
+        if (isEditMode && editId) {
+          await loadMdfeForEdit(editId);
+        } else {
+          await loadDefaultConfig();
+        }
+      } catch (error) {
+        console.error("Error in data loading:", error);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    loadDefaultConfig();
-  }, []);
+    loadData();
+
+    // Cleanup function to prevent memory leaks
+    return () => {
+      isMounted = false;
+    };
+  }, [editId, isEditMode, loadMdfeForEdit, loadDefaultConfig]); // Add proper dependencies
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -272,7 +359,6 @@ export default function NewMdfePage() {
         ...formData,
         [stepName]: stepData,
       });
-      // Aqui implementaria o envio do formulário completo
     }
   };
 
@@ -280,75 +366,116 @@ export default function NewMdfePage() {
     if (!formData || Object.keys(formData).length === 0) {
       toast({
         title: "Erro",
-        description: "Nenhum dado disponível para emitir o MDF-e.",
-      });
-      return;
-    }
-
-    // Validar dados obrigatórios
-    if (!formData.emitente?.CNPJ) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos obrigatórios antes de emitir.",
-      });
-      return;
-    }
-
-    // Validar se existe pelo menos uma nota adicionada
-    const hasDocuments = () => {
-      const docs = formData.informacoes_dos_documentos;
-      if (!docs) return false;
-
-      const nfeCount = docs.nfe?.length || 0;
-      const cteCount = docs.cte?.length || 0;
-      const mdfCount = docs.mdf?.length || 0;
-
-      return nfeCount > 0 || cteCount > 0 || mdfCount > 0;
-    };
-
-    if (!hasDocuments()) {
-      toast({
-        title: "Erro de Validação",
-        description:
-          "É necessário adicionar pelo menos uma nota fiscal (NF-e, CT-e ou MDF-e) antes de emitir o MDF-e.",
+        description: "Nenhum dado disponível para processar o MDF-e.",
         variant: "destructive",
       });
       return;
     }
 
+    // Validate required fields
+    if (!formData.emitente?.CNPJ) {
+      toast({
+        title: "Erro de Validação",
+        description:
+          "Preencha todos os campos obrigatórios antes de continuar.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate documents for creation mode
+    if (mode === "create") {
+      const hasDocuments = () => {
+        const docs = formData.informacoes_dos_documentos;
+        if (!docs) return false;
+        const nfeCount = docs.nfe?.length || 0;
+        const cteCount = docs.cte?.length || 0;
+        const mdfCount = docs.mdf?.length || 0;
+        return nfeCount > 0 || cteCount > 0 || mdfCount > 0;
+      };
+
+      if (!hasDocuments()) {
+        toast({
+          title: "Erro de Validação",
+          description:
+            "É necessário adicionar pelo menos uma nota fiscal (NF-e, CT-e ou MDF-e) antes de emitir o MDF-e.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     startTransition(async () => {
       try {
-        console.log("Emitindo MDF-e com os seguintes dados:", formData);
+        console.log(
+          `${isEditMode ? "Updating" : "Creating"} MDFe with data:`,
+          formData
+        );
 
-        // Preparar dados para criação
-        const mdfeData = {
-          ...formData,
-          dt_movto: new Date(),
-          status: "CRIADO",
-        };
+        let result: MdfeResponse;
 
-        const result = await createMdfe(mdfeData);
+        if (isEditMode && editId) {
+          // Update existing MDFe
+          const updateData = {
+            ...formData,
+            dt_movto: new Date(),
+            status: "EDITADO",
+            updatedAt: new Date(),
+          };
 
-        if (result.success) {
-          toast({
-            title: "MDF-e Emitido",
-            description: result.message || "O MDF-e foi emitido com sucesso.",
-          });
+          result = await updateMdfe(editId, updateData);
 
-          // Redirecionar para a lista de MDFes ou para a visualização do MDFe criado
-          router.push("/mdfe");
+          if (result.success) {
+            toast({
+              title: "MDF-e Atualizado",
+              description:
+                result.message ||
+                "O MDF-e foi atualizado e emitido com sucesso.",
+            });
+            router.push("/mdfe");
+          } else {
+            toast({
+              title: "Erro ao atualizar MDF-e",
+              description:
+                result.message || "Ocorreu um erro ao atualizar o MDF-e.",
+              variant: "destructive",
+            });
+          }
         } else {
-          toast({
-            title: "Erro ao emitir MDF-e",
-            description: result.message || "Ocorreu um erro ao emitir o MDF-e.",
-            variant: "destructive",
-          });
+          // Create new MDFe
+          const createData = {
+            ...formData,
+            dt_movto: new Date(),
+            status: "CRIADO",
+          };
+
+          result = await createMdfe(createData);
+
+          if (result.success) {
+            toast({
+              title: "MDF-e Emitido",
+              description: result.message || "O MDF-e foi emitido com sucesso.",
+            });
+            router.push("/mdfe");
+          } else {
+            toast({
+              title: "Erro ao emitir MDF-e",
+              description:
+                result.message || "Ocorreu um erro ao emitir o MDF-e.",
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
-        console.error("Erro ao emitir MDF-e:", error);
+        console.error(
+          `Error ${isEditMode ? "updating" : "creating"} MDFe:`,
+          error
+        );
         toast({
           title: "Erro",
-          description: "Erro inesperado ao emitir o MDF-e.",
+          description: `Erro inesperado ao ${
+            isEditMode ? "atualizar" : "emitir"
+          } o MDF-e.`,
           variant: "destructive",
         });
       }
@@ -359,7 +486,7 @@ export default function NewMdfePage() {
     if (!formData || Object.keys(formData).length === 0) {
       toast({
         title: "Erro",
-        description: "Nenhum dado disponível para salvar como rascunho.",
+        description: "Nenhum dado disponível para salvar.",
         variant: "destructive",
       });
       return;
@@ -368,53 +495,96 @@ export default function NewMdfePage() {
     startTransition(async () => {
       try {
         console.log(
-          "Salvando rascunho do MDF-e com os seguintes dados:",
+          `${isEditMode ? "Saving changes to" : "Saving draft of"} MDFe:`,
           formData
         );
 
-        // Preparar dados para salvar como rascunho
-        const draftData = {
-          ...formData,
-          status: "RASCUNHO",
-        };
+        let result: MdfeResponse;
 
-        const result = await createMdfe(draftData);
+        if (isEditMode && editId) {
+          // Save changes to existing MDFe
+          const saveData = {
+            ...formData,
+            status: formData.status || "RASCUNHO",
+            updatedAt: new Date(),
+          };
 
-        if (result.success) {
-          toast({
-            title: "Rascunho Salvo",
-            description:
-              result.message || "O rascunho do MDF-e foi salvo com sucesso.",
-          });
+          result = await updateMdfe(editId, saveData);
 
-          // Atualizar o formData com o ID gerado se disponível
-          if (result.data && !Array.isArray(result.data)) {
-            setFormData((prev: any) => ({
-              ...prev,
-              _id: (result.data as any)?._id,
-              id: (result.data as any)?.id || prev.id,
-            }));
+          if (result.success) {
+            toast({
+              title: "Alterações Salvas",
+              description:
+                result.message ||
+                "As alterações do MDF-e foram salvas com sucesso.",
+            });
+
+            // Update local form data with any changes
+            if (result.data && !Array.isArray(result.data)) {
+              setFormData((prev: any) => ({
+                ...prev,
+                _id: result.data._id || prev._id,
+                updatedAt: result.data.updatedAt || new Date(),
+              }));
+            }
+          } else {
+            toast({
+              title: "Erro ao salvar alterações",
+              description:
+                result.message || "Ocorreu um erro ao salvar as alterações.",
+              variant: "destructive",
+            });
           }
         } else {
-          toast({
-            title: "Erro ao salvar rascunho",
-            description:
-              result.message || "Ocorreu um erro ao salvar o rascunho.",
-            variant: "destructive",
-          });
+          // Save as new draft
+          const draftData = {
+            ...formData,
+            status: "RASCUNHO",
+          };
+
+          result = await createMdfe(draftData);
+
+          if (result.success) {
+            toast({
+              title: "Rascunho Salvo",
+              description:
+                result.message || "O rascunho do MDF-e foi salvo com sucesso.",
+            });
+
+            // Update form data with generated ID
+            if (result.data && !Array.isArray(result.data)) {
+              setFormData((prev: any) => ({
+                ...prev,
+                _id: result.data._id,
+                id: result.data.id || prev.id,
+              }));
+            }
+          } else {
+            toast({
+              title: "Erro ao salvar rascunho",
+              description:
+                result.message || "Ocorreu um erro ao salvar o rascunho.",
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
-        console.error("Erro ao salvar rascunho:", error);
+        console.error(
+          `Error ${isEditMode ? "saving changes to" : "saving draft of"} MDFe:`,
+          error
+        );
         toast({
           title: "Erro",
-          description: "Erro inesperado ao salvar o rascunho.",
+          description: `Erro inesperado ao ${
+            isEditMode ? "salvar alterações" : "salvar rascunho"
+          }.`,
           variant: "destructive",
         });
       }
     });
   };
 
-  const isProcessing = isPending || isLoading;
+  const isProcessing = isPending || isLoading || isLoadingMdfe;
 
   return (
     <div className="space-y-6">
@@ -426,7 +596,23 @@ export default function NewMdfePage() {
       </Link>
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Emitir novo MDF-e</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">
+            {isEditMode ? "Editar MDF-e" : "Emitir novo MDF-e"}
+          </h1>
+          {isEditMode && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <Edit className="h-3 w-3" />
+              Modo Edição
+            </Badge>
+          )}
+          {isLoadingMdfe && (
+            <Badge variant="outline" className="flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Carregando dados...
+            </Badge>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button
             variant="outline"
@@ -434,11 +620,21 @@ export default function NewMdfePage() {
             disabled={isProcessing}
           >
             <Save className="mr-2 h-4 w-4" />
-            {isPending ? "Salvando..." : "Salvar Rascunho"}
+            {isPending
+              ? "Salvando..."
+              : isEditMode
+              ? "Salvar Alterações"
+              : "Salvar Rascunho"}
           </Button>
           <Button onClick={handleEmit} disabled={isProcessing}>
             <Wand2 className="mr-2 h-4 w-4" />
-            {isPending ? "Emitindo..." : "Emitir"}
+            {isPending
+              ? isEditMode
+                ? "Atualizando..."
+                : "Emitindo..."
+              : isEditMode
+              ? "Atualizar"
+              : "Emitir"}
           </Button>
         </div>
       </div>
@@ -468,12 +664,14 @@ export default function NewMdfePage() {
       </div>
 
       <div className="rounded-md border p-6">
-        {isLoading ? (
+        {isLoading || isLoadingMdfe ? (
           <div className="flex items-center justify-center py-8">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">
-                Carregando configuração padrão...
+                {isLoadingMdfe
+                  ? "Carregando dados do MDF-e..."
+                  : "Carregando configuração padrão..."}
               </p>
             </div>
           </div>
@@ -498,7 +696,10 @@ export default function NewMdfePage() {
               />
             )}
             {currentStep === 3 && (
-              <MdfeAquaviarioForm onSubmit={handleSubmitStep} />
+              <MdfeAquaviarioForm
+                onSubmit={handleSubmitStep}
+                initialData={formData?.aquaviario || {}}
+              />
             )}
             {currentStep === 4 && (
               <MdfeDocumentosForm
@@ -513,7 +714,10 @@ export default function NewMdfePage() {
               />
             )}
             {currentStep === 6 && (
-              <MdfeInformacoesAdicionaisForm onSubmit={handleSubmitStep} />
+              <MdfeInformacoesAdicionaisForm
+                onSubmit={handleSubmitStep}
+                initialData={formData?.informacoes_adicionais || {}}
+              />
             )}
             <div className="flex justify-between">
               <Button

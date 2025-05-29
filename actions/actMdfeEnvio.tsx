@@ -389,19 +389,22 @@ export async function updateMdfe(id: string, data: any): Promise<MdfeResponse> {
       };
     }
 
+    // Remove _id field from data to prevent MongoDB update errors
+    const { _id, ...updateData } = data;
+
     await clientdb.collection(collectionName).updateOne(
       {
         id: String(id),
         id_tenant: Number(user.id_tenant),
       },
-      { $set: data }
+      { $set: updateData }
     );
     await TMongo.mongoDisconnect(client);
 
     return {
       success: true,
       message: "MDFe atualizado com sucesso",
-      data: data,
+      data: updateData,
     };
   } catch (error) {
     console.error(`Erro ao atualizar MDFe com ID ${id}:`, error);

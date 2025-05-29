@@ -8,14 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 
 interface MdfeInformacoesAdicionaisFormProps {
   onSubmit: (data: any) => void;
+  initialData?: any;
 }
 
 export function MdfeInformacoesAdicionaisForm({
   onSubmit,
+  initialData,
 }: MdfeInformacoesAdicionaisFormProps) {
   const [formData, setFormData] = useState({
-    infAdFisco: "",
-    infCpl: "",
+    infAdFisco: initialData?.infAdFisco || "",
+    infCpl: initialData?.infCpl || "",
   });
 
   const handleChange = (
