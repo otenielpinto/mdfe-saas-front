@@ -35,7 +35,7 @@ export function MdfeTotalizadoresForm({
   // Update form data when initialData changes
   useEffect(() => {
     let totalizadores = initialData as TotalizadoresData | undefined;
-    let docs: any = initialData?.informacoes_dos_documentos;
+    let docs: any = initialData?.infDoc;
 
     // Calculate totals from documents
     if (docs) {

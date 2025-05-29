@@ -59,7 +59,7 @@ export function MdfeAquaviarioForm({
   const handleRemoveBalsa = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      balsa: prev.balsa.filter((_, i) => i !== index),
+      balsa: prev.balsa.filter((balsa, i) => i !== index),
     }));
   };
 

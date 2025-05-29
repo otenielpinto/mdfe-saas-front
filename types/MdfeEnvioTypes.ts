@@ -37,102 +37,158 @@ export enum TipoEmissao {
   CONTINGENCIA = "2",
 }
 
-// Main MDFe document interface reflecting the actual MongoDB structure
+// Form mode type
+export type MdfeFormMode = "create" | "edit";
+
+// Step mapping types for MongoDB storage optimization
+export type MdfeStepName =
+  | "Dados"
+  | "Emitente"
+  | "Rodoviario"
+  | "Aquaviario"
+  | "Informacoes dos Documentos"
+  | "Totalizadores"
+  | "Informacoes adicionais";
+
+export type MdfeStepAlias =
+  | "ide"
+  | "emit"
+  | "rodo"
+  | "aquav"
+  | "infDoc"
+  | "tot"
+  | "infAdic";
+
+// Individual step types for better organization
+export interface MdfeDados {
+  cUF: string;
+  tpEmit: string;
+  tpTransp: string;
+  tpAmb: TipoAmbiente;
+  tpEmis: TipoEmissao;
+  mod: string;
+  serie: string;
+  numero: string;
+  cMDF: string;
+  cDV: string;
+  dhEmi: string;
+  dtEmi: Date;
+  hora: string;
+  tpModal: ModalType;
+  ufIni: string;
+  ufFim: string;
+  dhIniViagem?: string;
+  indCanalVerde: boolean;
+  indCarregaPosterior: boolean;
+  infMunCarrega: Array<{
+    cMunCarrega: string;
+    xMunCarrega: string;
+  }>;
+  infPercurso: string;
+}
+
+export interface MdfeEmitente {
+  CNPJ: string;
+  IE: string;
+  xNome: string;
+  xFant?: string;
+  enderEmit: {
+    xLgr: string;
+    nro: string;
+    xCpl?: string;
+    xBairro: string;
+    cMun: string;
+    xMun: string;
+    CEP: string;
+    UF: string;
+    fone?: string;
+    email?: string;
+  };
+}
+
+export interface MdfeRodoviario {
+  codigoAgregacao?: string;
+  placaVeiculo: string;
+  renavam?: string;
+  tara?: string;
+  capacidadeKG?: string;
+  capacidadeM3?: string;
+  tpCar: string;
+  tpRod: string;
+  condutores: Array<{
+    xNome: string;
+    cpf: string;
+  }>;
+}
+
+export interface MdfeAquaviario {
+  irin?: string;
+  nomeEmbarcacao?: string;
+  codigoEmbarcacao?: string;
+  balsa: Array<any>;
+}
+
+export interface MdfeDocumentos {
+  nfe: Array<{
+    chave: string;
+    segCodBarra?: string;
+    indReentrega: boolean;
+    pesoTotal: string;
+    valor: string;
+    municipioCarregamento: string;
+    municipioDescarregamento: string;
+  }>;
+  cte: Array<{
+    chave: string;
+    segCodBarra?: string;
+    indReentrega: boolean;
+    pesoTotal: string;
+    valor: string;
+    municipioCarregamento: string;
+    municipioDescarregamento: string;
+  }>;
+  mdf: Array<{
+    chave: string;
+    segCodBarra?: string;
+    indReentrega: boolean;
+    pesoTotal: string;
+    valor: string;
+    municipioCarregamento: string;
+    municipioDescarregamento: string;
+  }>;
+}
+
+export interface MdfeTotalizadores {
+  qCTe: string;
+  qNFe: string;
+  qMDFe: string;
+  vCarga: string;
+  cUnid: string;
+  qCarga: string;
+}
+
+export interface MdfeInformacoesAdicionais {
+  infAdFisco?: string;
+  infCpl?: string;
+}
+
+/**
+ * Optimized MDFe document interface using aliases for MongoDB storage
+ * This interface represents the actual structure stored in MongoDB
+ */
 export interface MdfeDocument {
   _id?: string;
   id: string;
   dt_movto: Date;
 
-  // Main data section
-  dados: {
-    cUF: string;
-    tpEmit: string;
-    tpTransp: string;
-    tpAmb: TipoAmbiente;
-    tpEmis: TipoEmissao;
-    mod: string;
-    serie: string;
-    numero: string;
-    cMDF: string;
-    cDV: string;
-    dhEmi: string;
-    dtEmi: Date;
-    hora: string;
-    tpModal: ModalType;
-    ufIni: string;
-    ufFim: string;
-    dhIniViagem?: string;
-    indCanalVerde: boolean;
-    indCarregaPosterior: boolean;
-    infMunCarrega: Array<{
-      cMunCarrega: string;
-      xMunCarrega: string;
-    }>;
-    infPercurso: string;
-  };
-
-  // Road transport specific data
-  rodoviario: {
-    codigoAgregacao?: string;
-    placaVeiculo: string;
-    renavam?: string;
-    tara?: string;
-    capacidadeKG?: string;
-    capacidadeM3?: string;
-    tpCar: string;
-    tpRod: string;
-    condutores: Array<{
-      xNome: string;
-      cpf: string;
-    }>;
-  };
-
-  // Documents information
-  informacoes_dos_documentos: {
-    nfe: Array<{
-      chave: string;
-      segCodBarra?: string;
-      indReentrega: boolean;
-      pesoTotal: string;
-      valor: string;
-      municipioCarregamento: string;
-      municipioDescarregamento: string;
-    }>;
-    cte: Array<{
-      chave: string;
-      segCodBarra?: string;
-      indReentrega: boolean;
-      pesoTotal: string;
-      valor: string;
-      municipioCarregamento: string;
-      municipioDescarregamento: string;
-    }>;
-    mdf: Array<{
-      chave: string;
-      segCodBarra?: string;
-      indReentrega: boolean;
-      pesoTotal: string;
-      valor: string;
-      municipioCarregamento: string;
-      municipioDescarregamento: string;
-    }>;
-  };
-
-  // Totals
-  totalizadores: {
-    qCTe: string;
-    qNFe: string;
-    qMDFe: string;
-    vCarga: string;
-    cUnid: string;
-    qCarga: string;
-  };
-
-  // Additional information
-  informacoes_adicionais: {
-    infAdFisco?: string;
-    infCpl?: string;
-  };
+  // Optimized step data using aliases
+  ide: MdfeDados;
+  emit: MdfeEmitente;
+  rodo: MdfeRodoviario;
+  aquav: MdfeAquaviario;
+  infDoc: MdfeDocumentos;
+  tot: MdfeTotalizadores;
+  infAdic: MdfeInformacoesAdicionais;
 
   // Reference data
   referencia: Record<string, any>;
@@ -142,34 +198,6 @@ export interface MdfeDocument {
   qrCodMDFe?: string;
   chave?: string;
 
-  // Emitter information
-  emitente: {
-    CNPJ: string;
-    IE: string;
-    xNome: string;
-    xFant?: string;
-    enderEmit: {
-      xLgr: string;
-      nro: string;
-      xCpl?: string;
-      xBairro: string;
-      cMun: string;
-      xMun: string;
-      CEP: string;
-      UF: string;
-      fone?: string;
-      email?: string;
-    };
-  };
-
-  // Waterway transport data
-  aquaviario: {
-    irin?: string;
-    nomeEmbarcacao?: string;
-    codigoEmbarcacao?: string;
-    balsa: Array<any>;
-  };
-
   // Metadata
   createdAt: Date;
   updatedAt: Date;
@@ -177,13 +205,13 @@ export interface MdfeDocument {
   id_empresa: number;
 }
 
-// Form data interface for the dual mode MDFe form
+/**
+ * Form data interface for optimized MDFe forms
+ * Extends MdfeDocument but makes timestamps optional for form handling
+ */
 export interface MdfeFormData
   extends Omit<MdfeDocument, "_id" | "createdAt" | "updatedAt"> {
   _id?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
-
-// Form mode type for better type safety
-export type MdfeFormMode = "create" | "edit";

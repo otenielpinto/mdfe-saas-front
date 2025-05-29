@@ -45,32 +45,32 @@ export async function getAllMdfe(data: MdfeSearchForm): Promise<MdfeResponse> {
 
   // Date range filter for emission period
   if (periodoEmissaoInicio || periodoEmissaoFim) {
-    filter["dados.dtEmi"] = {};
+    filter["ide.dtEmi"] = {};
     if (periodoEmissaoInicio) {
       const dtEmiStart = getBrazilDateTime(periodoEmissaoInicio);
       dtEmiStart.setUTCDate(dtEmiStart.getUTCDate() + 1); // Adjust to start of day
-      filter["dados.dtEmi"].$gte = lib.setUTCHoursStart(dtEmiStart);
+      filter["ide.dtEmi"].$gte = lib.setUTCHoursStart(dtEmiStart);
     }
     if (periodoEmissaoFim) {
       const dtEmiEnd = getBrazilDateTime(periodoEmissaoFim);
       dtEmiEnd.setUTCDate(dtEmiEnd.getUTCDate() + 1); // Adjust to start of day
-      filter["dados.dtEmi"].$lte = lib.setUTCHoursEnd(dtEmiEnd);
+      filter["ide.dtEmi"].$lte = lib.setUTCHoursEnd(dtEmiEnd);
     }
   }
 
   // Serie filter
   if (serie) {
-    filter["dados.serie"] = serie;
+    filter["ide.serie"] = serie;
   }
 
   // Number range filter
   if (numeroInicial || numeroFinal) {
-    filter["dados.numero"] = {};
+    filter["ide.numero"] = {};
     if (numeroInicial) {
-      filter["dados.numero"].$gte = numeroInicial;
+      filter["ide.numero"].$gte = numeroInicial;
     }
     if (numeroFinal) {
-      filter["dados.numero"].$lte = numeroFinal;
+      filter["ide.numero"].$lte = numeroFinal;
     }
   }
 
@@ -81,32 +81,32 @@ export async function getAllMdfe(data: MdfeSearchForm): Promise<MdfeResponse> {
 
   // Emission type filter
   if (tipoEmissao) {
-    filter["dados.tpEmis"] = tipoEmissao;
+    filter["ide.tpEmis"] = tipoEmissao;
   }
 
   // Modality filter
   if (modalidade) {
-    filter["dados.tpModal"] = modalidade;
+    filter["ide.tpModal"] = modalidade;
   }
 
   // UF filters
   if (ufCarregamento) {
-    filter["dados.infMunCarrega.cMunCarrega"] = {
+    filter["ide.infMunCarrega.cMunCarrega"] = {
       $regex: `^${ufCarregamento}`,
     };
   }
 
   if (ufDescarregamento) {
-    filter["dados.ufFim"] = ufDescarregamento;
+    filter["ide.ufFim"] = ufDescarregamento;
   }
 
   if (ufPercurso) {
-    filter["dados.infPercurso"] = { $regex: ufPercurso, $options: "i" };
+    filter["ide.infPercurso"] = { $regex: ufPercurso, $options: "i" };
   }
 
   // CTe key filter - search in documents array
   if (chaveCte) {
-    filter["informacoes_dos_documentos.cte.chave"] = {
+    filter["infDoc.cte.chave"] = {
       $regex: chaveCte,
       $options: "i",
     };
@@ -114,7 +114,7 @@ export async function getAllMdfe(data: MdfeSearchForm): Promise<MdfeResponse> {
 
   // NFe key filter - search in documents array
   if (chaveNfe) {
-    filter["informacoes_dos_documentos.nfe.chave"] = {
+    filter["infDoc.nfe.chave"] = {
       $regex: chaveNfe,
       $options: "i",
     };
@@ -321,7 +321,7 @@ export async function createMdfe(data: any): Promise<MdfeResponse> {
 
   // Add timestamps with Brazil timezone
   const currentDateTime = getBrazilDateTime();
-  data.dados.dtEmi = getBrazilDateTime(data.dados.dtEmi);
+  data.ide.dtEmi = getBrazilDateTime(data.ide.dtEmi);
   try {
     const { client, clientdb } = await TMongo.connectToDatabase();
 

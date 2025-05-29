@@ -113,7 +113,6 @@ export function MdfeEmitenteForm({
   });
 
   const handleSubmit = (data: EmitenteFormValues) => {
-    console.log("Dados do Emitente:", data);
     onSubmit(data);
   };
 

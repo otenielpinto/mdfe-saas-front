@@ -222,22 +222,18 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
               mdfes.map((mdfe) => (
                 <TableRow key={mdfe._id?.toString() || mdfe.id?.toString()}>
                   <TableCell className="font-medium">
-                    {mdfe.dados?.dhEmi} {mdfe.dados?.hora}
+                    {mdfe.ide?.dhEmi} {mdfe.ide?.hora}
                   </TableCell>
                   <TableCell>
-                    {mdfe.dados?.serie && mdfe.dados.numero
-                      ? `${mdfe.dados.serie}/${mdfe.dados.numero}`
+                    {mdfe.ide?.serie && mdfe.ide.numero
+                      ? `${mdfe.ide.serie}/${mdfe.ide.numero}`
                       : "N/A"}
                   </TableCell>
-                  <TableCell>{mdfe.emitente?.xNome || "N/A"}</TableCell>
-                  <TableCell>{mdfe.dados?.ufIni || "N/A"}</TableCell>
-                  <TableCell>{mdfe.dados?.ufFim || "N/A"}</TableCell>
-                  <TableCell>
-                    {formatCurrency(mdfe.totalizadores?.vCarga)}
-                  </TableCell>
-                  <TableCell>
-                    {formatQuantity(mdfe.totalizadores?.qNFe)}
-                  </TableCell>
+                  <TableCell>{mdfe.emit?.xNome || "N/A"}</TableCell>
+                  <TableCell>{mdfe.ide?.ufIni || "N/A"}</TableCell>
+                  <TableCell>{mdfe.ide?.ufFim || "N/A"}</TableCell>
+                  <TableCell>{formatCurrency(mdfe.tot?.vCarga)}</TableCell>
+                  <TableCell>{formatQuantity(mdfe.tot?.qNFe)}</TableCell>
                   <TableCell>{getStatusBadge(mdfe.status)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

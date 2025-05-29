@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useTransition, useCallback } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +33,12 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import { lib } from "@/lib/lib";
+import {
+  getStepAlias,
+  getFormDataForStep,
+  validateStepData,
+  initializeOptimizedFormData,
+} from "@/lib/utils";
 
 const steps = [
   "Dados",
@@ -58,7 +64,9 @@ export default function NewMdfePage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  // Optimize loadMdfeForEdit with useCallback to prevent unnecessary re-renders
+  /**
+   * Load MDFe data for editing with optimized structure
+   */
   const loadMdfeForEdit = useCallback(
     async (id: string) => {
       try {
@@ -70,19 +78,19 @@ export default function NewMdfePage() {
         if (response.success && response.data) {
           const mdfeData = response.data;
 
-          // Convert and format date fields for form inputs
+          // Process and format data for form inputs
           const processedData = {
             ...mdfeData,
-            dados: {
-              ...mdfeData.dados,
-              dhEmi: mdfeData.dados?.dhEmi
-                ? lib.formatDateForInput(new Date(mdfeData.dados.dhEmi))
+            ide: {
+              ...mdfeData.ide,
+              dhEmi: mdfeData.ide?.dhEmi
+                ? lib.formatDateForInput(new Date(mdfeData.ide.dhEmi))
                 : lib.formatDateForInput(new Date()),
-              dtEmi: mdfeData.dados?.dtEmi
-                ? new Date(mdfeData.dados.dtEmi)
+              dtEmi: mdfeData.ide?.dtEmi
+                ? new Date(mdfeData.ide.dtEmi)
                 : new Date(),
               hora:
-                mdfeData.dados?.hora ||
+                mdfeData.ide?.hora ||
                 new Date().toLocaleTimeString("pt-BR", {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -96,7 +104,7 @@ export default function NewMdfePage() {
           toast({
             title: "MDFe Carregado",
             description: `MDFe "${
-              mdfeData.dados?.numero || mdfeData.id
+              processedData.ide?.numero || processedData.id
             }" carregado para edição.`,
           });
 
@@ -110,7 +118,6 @@ export default function NewMdfePage() {
             variant: "destructive",
           });
 
-          // Fallback to creation mode if MDFe not found
           router.replace("/mdfe/new");
         }
       } catch (error) {
@@ -121,7 +128,6 @@ export default function NewMdfePage() {
           variant: "destructive",
         });
 
-        // Fallback to creation mode on error
         router.replace("/mdfe/new");
       } finally {
         setIsLoadingMdfe(false);
@@ -130,7 +136,9 @@ export default function NewMdfePage() {
     [router, toast]
   );
 
-  // Optimize loadDefaultConfig with useCallback
+  /**
+   * Load default configuration with optimized structure
+   */
   const loadDefaultConfig = useCallback(async () => {
     try {
       const [configResponse, emitenteResponse] = await Promise.all([
@@ -145,12 +153,14 @@ export default function NewMdfePage() {
           "0"
         );
 
-        const defaultFormData: MdfeFormData = {
+        // Initialize with optimized structure using aliases
+        const defaultFormData = initializeOptimizedFormData({
           id_empresa: config.id_empresa || 0,
           id_tenant: config.id_tenant || 0,
           id: uuidv4(),
           dt_movto: new Date(),
-          dados: {
+
+          ide: {
             cUF: config.cUF?.toString() || "",
             tpEmit: config.tpEmit?.toString() || "1",
             tpTransp: config.tpTransp?.toString() || "1",
@@ -183,39 +193,8 @@ export default function NewMdfePage() {
                 ? config.infPercurso.map((p: any) => p.UFPer).join(", ")
                 : "",
           },
-          rodoviario: {
-            codigoAgregacao: config.codigoAgregacao || "",
-            placaVeiculo: config.placaVeiculo || "",
-            renavam: config.renavam || "",
-            tara: config.tara || "",
-            capacidadeKG: config.capacidadeKG || "",
-            capacidadeM3: config.capacidadeM3 || "",
-            tpCar: config.tpCar || "",
-            tpRod: config.tpRod || "",
-            condutores: [{ xNome: config.xNome || "", cpf: config.cpf || "" }],
-          },
-          informacoes_dos_documentos: {
-            nfe: [],
-            cte: [],
-            mdf: [],
-          },
-          totalizadores: {
-            qCTe: "",
-            qNFe: "",
-            qMDFe: "",
-            vCarga: "",
-            cUnid: "",
-            qCarga: "",
-          },
-          informacoes_adicionais: {
-            infAdFisco: "",
-            infCpl: "",
-          },
-          referencia: {},
-          status: "RASCUNHO" as any,
-          qrCodMDFe: "",
-          chave: "",
-          emitente: {
+
+          emit: {
             CNPJ: "",
             IE: "",
             xNome: "",
@@ -233,15 +212,36 @@ export default function NewMdfePage() {
               email: "",
             },
           },
-          aquaviario: {
-            irin: "",
-            nomeEmbarcacao: "",
-            codigoEmbarcacao: "",
-            balsa: [],
+
+          rodo: {
+            codigoAgregacao: config.codigoAgregacao || "",
+            placaVeiculo: config.placaVeiculo || "",
+            renavam: config.renavam || "",
+            tara: config.tara || "",
+            capacidadeKG: config.capacidadeKG || "",
+            capacidadeM3: config.capacidadeM3 || "",
+            tpCar: config.tpCar || "",
+            tpRod: config.tpRod || "",
+            condutores: [{ xNome: config.xNome || "", cpf: config.cpf || "" }],
           },
+
+          tot: {
+            qCTe: "",
+            qNFe: "",
+            qMDFe: "",
+            vCarga: "",
+            cUnid: "",
+            qCarga: "",
+          },
+
+          // Keep existing fields for compatibility
+          referencia: {},
+          status: "RASCUNHO" as any,
+          qrCodMDFe: "",
+          chave: "",
           createdAt: new Date(),
           updatedAt: new Date(),
-        };
+        });
 
         // Pre-populate emitente if available
         if (
@@ -251,7 +251,7 @@ export default function NewMdfePage() {
           emitenteResponse.data.length > 0
         ) {
           const primeiroEmitente = emitenteResponse.data[0];
-          defaultFormData.emitente = {
+          defaultFormData.emit = {
             CNPJ: primeiroEmitente.cpfcnpj || "",
             IE: primeiroEmitente.ie || "",
             xNome: primeiroEmitente.razao_social || "",
@@ -348,16 +348,22 @@ export default function NewMdfePage() {
   };
 
   const handleSubmitStep = (stepData: any) => {
-    const stepName = steps[currentStep].toLowerCase().replace(/ /g, "_");
-    setFormData((prev: any) => ({ ...prev, [stepName]: stepData }));
-    console.log(`Dados do passo "${steps[currentStep]}":`, stepData);
+    const stepName = steps[currentStep];
+    const stepAlias = getStepAlias(stepName);
+
+    setFormData((prev: any) => ({
+      ...prev,
+      [stepAlias]: stepData,
+    }));
+
+    console.log(`Dados do passo "${stepName}" (${stepAlias}):`, stepData);
 
     if (currentStep < steps.length - 1) {
       handleNext();
     } else {
       console.log("Formulário completo:", {
         ...formData,
-        [stepName]: stepData,
+        [stepAlias]: stepData,
       });
     }
   };
@@ -372,12 +378,26 @@ export default function NewMdfePage() {
       return;
     }
 
-    // Validate required fields
-    if (!formData.emitente?.CNPJ) {
+    // Validate required fields using centralized validation
+    const requiredSteps = ["Emitente"];
+    const validation = validateStepData(formData, requiredSteps);
+
+    if (!validation.isValid) {
       toast({
         title: "Erro de Validação",
-        description:
-          "Preencha todos os campos obrigatórios antes de continuar.",
+        description: `Preencha os seguintes passos obrigatórios: ${validation.missingSteps.join(
+          ", "
+        )}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Additional validation for emitter CNPJ
+    if (!formData.emit?.CNPJ) {
+      toast({
+        title: "Erro de Validação",
+        description: "CNPJ do emitente é obrigatório.",
         variant: "destructive",
       });
       return;
@@ -386,7 +406,7 @@ export default function NewMdfePage() {
     // Validate documents for creation mode
     if (mode === "create") {
       const hasDocuments = () => {
-        const docs = formData.informacoes_dos_documentos;
+        const docs = formData.infDoc;
         if (!docs) return false;
         const nfeCount = docs.nfe?.length || 0;
         const cteCount = docs.cte?.length || 0;
@@ -408,7 +428,7 @@ export default function NewMdfePage() {
     startTransition(async () => {
       try {
         console.log(
-          `${isEditMode ? "Updating" : "Creating"} MDFe with data:`,
+          `${isEditMode ? "Updating" : "Creating"} MDFe with optimized data:`,
           formData
         );
 
@@ -495,7 +515,9 @@ export default function NewMdfePage() {
     startTransition(async () => {
       try {
         console.log(
-          `${isEditMode ? "Saving changes to" : "Saving draft of"} MDFe:`,
+          `${
+            isEditMode ? "Saving changes to" : "Saving draft of"
+          } optimized MDFe:`,
           formData
         );
 
@@ -680,31 +702,31 @@ export default function NewMdfePage() {
             {currentStep === 0 && (
               <MdfeDadosForm
                 onSubmit={handleSubmitStep}
-                initialData={formData?.dados || {}}
+                initialData={getFormDataForStep(formData, "ide")}
               />
             )}
             {currentStep === 1 && (
               <MdfeEmitenteForm
                 onSubmit={handleSubmitStep}
-                initialData={formData?.emitente || {}}
+                initialData={getFormDataForStep(formData, "emit")}
               />
             )}
             {currentStep === 2 && (
               <MdfeRodoviarioForm
                 onSubmit={handleSubmitStep}
-                initialData={formData?.rodoviario || {}}
+                initialData={getFormDataForStep(formData, "rodo")}
               />
             )}
             {currentStep === 3 && (
               <MdfeAquaviarioForm
                 onSubmit={handleSubmitStep}
-                initialData={formData?.aquaviario || {}}
+                initialData={getFormDataForStep(formData, "aquav")}
               />
             )}
             {currentStep === 4 && (
               <MdfeDocumentosForm
                 onSubmit={handleSubmitStep}
-                initialData={formData?.informacoes_dos_documentos || {}}
+                initialData={getFormDataForStep(formData, "infDoc")}
               />
             )}
             {currentStep === 5 && (
@@ -716,7 +738,7 @@ export default function NewMdfePage() {
             {currentStep === 6 && (
               <MdfeInformacoesAdicionaisForm
                 onSubmit={handleSubmitStep}
-                initialData={formData?.informacoes_adicionais || {}}
+                initialData={getFormDataForStep(formData, "infAdic")}
               />
             )}
             <div className="flex justify-between">
