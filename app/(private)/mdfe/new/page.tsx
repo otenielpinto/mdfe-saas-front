@@ -247,8 +247,11 @@ export default function NewMdfePage() {
             nfe: [],
             cte: [],
             mdf: [],
-            municipioCarregamento: config.municipioCarregamento || "",
-            municipioDescarregamento: config.municipioDescarregamento || "",
+
+            cMunCarrega: config.cMunCarrega || "",
+            xMunCarrega: config.xMunCarrega || "",
+            cMunDescarga: config.cMunDescarga || "",
+            xMunDescarga: config.xMunDescarga || "",
           },
           infAdic: {
             infCpl: "",

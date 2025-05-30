@@ -12,6 +12,44 @@ import {
 import { FormEvent } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { z } from "zod";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+// Zod schema for document validation
+const documentoSchema = z.object({
+  chave: z
+    .string()
+    .min(1, "Chave é obrigatória")
+    .length(44, "Chave deve ter exatamente 44 dígitos")
+    .regex(/^\d{44}$/, "Chave deve conter apenas números"),
+  segCodBarra: z.string().optional(),
+  indReentrega: z.boolean(),
+  pesoTotal: z.string().optional(),
+  valor: z.string().optional(),
+  cMunCarrega: z.string().optional(),
+  xMunCarrega: z
+    .string()
+    .min(1, "Município de carregamento é obrigatório")
+    .min(2, "Município deve ter pelo menos 2 caracteres"),
+  cMunDescarga: z.string().optional(),
+  xMunDescarga: z
+    .string()
+    .min(1, "Município de descarregamento é obrigatório")
+    .min(2, "Município deve ter pelo menos 2 caracteres"),
+});
+
+// Custom error types
+class DocumentValidationError extends Error {
+  constructor(message: string, public field: string, public code: string) {
+    super(message);
+    this.name = "DocumentValidationError";
+  }
+}
+
+// Types
+type ValidationErrors = Partial<Record<keyof Documento, string>>;
 
 interface MdfeDocumentosFormProps {
   onSubmit: (data: any) => void;
@@ -19,8 +57,10 @@ interface MdfeDocumentosFormProps {
     nfe?: Documento[];
     cte?: Documento[];
     mdf?: Documento[];
-    municipioCarregamento?: string;
-    municipioDescarregamento?: string;
+    cMunCarrega: string;
+    xMunCarrega: string;
+    cMunDescarga: string;
+    xMunDescarga: string;
   };
 }
 
@@ -30,15 +70,23 @@ interface Documento {
   indReentrega: boolean;
   pesoTotal: string;
   valor: string;
-  municipioCarregamento: string;
-  municipioDescarregamento: string;
+  cMunCarrega: string;
+  xMunCarrega: string;
+  cMunDescarga: string;
+  xMunDescarga: string;
 }
 
 export function MdfeDocumentosForm({
   onSubmit,
   initialData,
 }: MdfeDocumentosFormProps) {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("nfe");
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
+  const [isValidating, setIsValidating] = useState(false);
+
   const [documentos, setDocumentos] = useState<{
     nfe: Documento[];
     cte: Documento[];
@@ -55,8 +103,10 @@ export function MdfeDocumentosForm({
     indReentrega: false,
     pesoTotal: "",
     valor: "",
-    municipioCarregamento: initialData?.municipioCarregamento || "",
-    municipioDescarregamento: initialData?.municipioDescarregamento || "",
+    cMunCarrega: initialData?.cMunCarrega || "",
+    xMunCarrega: initialData?.xMunCarrega || "",
+    cMunDescarga: initialData?.cMunDescarga || "",
+    xMunDescarga: initialData?.xMunDescarga || "",
   });
 
   // Update state when initialData changes
@@ -70,22 +120,98 @@ export function MdfeDocumentosForm({
 
       setNovoDocumento((prev) => ({
         ...prev,
-        municipioCarregamento: initialData.municipioCarregamento || "",
-        municipioDescarregamento: initialData.municipioDescarregamento || "",
+        cMunCarrega: initialData?.cMunCarrega || "",
+        xMunCarrega: initialData?.xMunCarrega || "",
+        cMunDescarga: initialData?.cMunDescarga || "",
+        xMunDescarga: initialData?.xMunDescarga || "",
       }));
     }
   }, [initialData]);
 
+  /**
+   * Validates document data using Zod schema
+   * @param documento - Document data to validate
+   * @returns Object with validation result and errors
+   */
+  const validateDocumento = (documento: Documento) => {
+    try {
+      documentoSchema.parse(documento);
+      return { isValid: true, errors: {} };
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: ValidationErrors = {};
+        error.errors.forEach((err) => {
+          const field = err.path[0] as keyof Documento;
+          errors[field] = err.message;
+        });
+        return { isValid: false, errors };
+      }
+      return {
+        isValid: false,
+        errors: { chave: "Erro de validação desconhecido" },
+      };
+    }
+  };
+
+  /**
+   * Clears validation errors for a specific field
+   * @param fieldName - Name of the field to clear errors for
+   */
+  const clearFieldError = (fieldName: keyof Documento) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName];
+        return newErrors;
+      });
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
+    const fieldName = name as keyof Documento;
+
     setNovoDocumento((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+
+    // Clear validation error for this field when user starts typing
+    clearFieldError(fieldName);
   };
 
-  const handleAddDocumento = () => {
-    if (novoDocumento.chave && novoDocumento.chave.length === 44) {
+  const handleAddDocumento = async () => {
+    setIsValidating(true);
+
+    try {
+      // Early return for empty chave
+      if (!novoDocumento.chave.trim()) {
+        throw new DocumentValidationError(
+          "Chave do documento é obrigatória",
+          "chave",
+          "REQUIRED_FIELD"
+        );
+      }
+
+      // Validate document with Zod schema
+      const { isValid, errors } = validateDocumento(novoDocumento);
+
+      if (!isValid) {
+        setValidationErrors(errors);
+
+        // Show toast with first error
+        const firstError = Object.values(errors)[0];
+        toast({
+          variant: "destructive",
+          title: "Erro de Validação",
+          description: firstError,
+          duration: 4000,
+        });
+
+        return;
+      }
+
+      // Success path - add document
       setDocumentos((prev) => ({
         ...prev,
         [activeTab]: [
@@ -94,15 +220,48 @@ export function MdfeDocumentosForm({
         ],
       }));
 
+      // Reset form
       setNovoDocumento({
         chave: "",
         segCodBarra: "",
         indReentrega: false,
         pesoTotal: "",
         valor: "",
-        municipioCarregamento: "",
-        municipioDescarregamento: "",
+        cMunCarrega: "",
+        xMunCarrega: "",
+        cMunDescarga: "",
+        xMunDescarga: "",
       });
+
+      // Clear any existing errors
+      setValidationErrors({});
+
+      // Show success toast
+      toast({
+        title: "Documento Adicionado",
+        description: "Documento foi adicionado com sucesso à lista.",
+        duration: 3000,
+      });
+    } catch (error) {
+      if (error instanceof DocumentValidationError) {
+        setValidationErrors({ [error.field]: error.message });
+        toast({
+          variant: "destructive",
+          title: "Erro de Validação",
+          description: error.message,
+          duration: 4000,
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Erro Inesperado",
+          description:
+            "Ocorreu um erro ao adicionar o documento. Tente novamente.",
+          duration: 4000,
+        });
+      }
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -113,11 +272,95 @@ export function MdfeDocumentosForm({
         (_, i) => i !== index
       ),
     }));
+
+    toast({
+      title: "Documento Removido",
+      description: "Documento foi removido da lista.",
+      duration: 3000,
+    });
   };
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+
+    // Validate that at least one document exists
+    const totalDocuments = Object.values(documentos).reduce(
+      (total, docs) => total + docs.length,
+      0
+    );
+
+    if (totalDocuments === 0) {
+      toast({
+        variant: "destructive",
+        title: "Nenhum Documento",
+        description: "Adicione pelo menos um documento antes de continuar.",
+        duration: 4000,
+      });
+      return;
+    }
+
     onSubmit(documentos);
+  };
+
+  /**
+   * Renders input with validation state
+   */
+  const renderInputWithValidation = (
+    id: string,
+    name: keyof Documento,
+    label: string,
+    placeholder?: string,
+    type: string = "text",
+    maxLength?: number,
+    required: boolean = false
+  ) => {
+    const hasError = !!validationErrors[name];
+    const value = novoDocumento[name];
+
+    return (
+      <div className="space-y-2">
+        <Label
+          htmlFor={id}
+          className={cn(
+            "flex items-center gap-1",
+            required && "after:content-['*'] after:text-red-500"
+          )}
+        >
+          {label}
+          {hasError && <AlertCircle className="h-4 w-4 text-red-500" />}
+          {!hasError && value && required && (
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
+          )}
+        </Label>
+        <Input
+          id={id}
+          name={name}
+          value={value as string}
+          onChange={handleChange}
+          placeholder={placeholder}
+          type={type}
+          maxLength={maxLength}
+          autoComplete="off"
+          className={cn(
+            "transition-colors",
+            hasError &&
+              "border-red-500 focus:border-red-500 focus:ring-red-500",
+            !hasError && value && required && "border-green-500"
+          )}
+          aria-invalid={hasError}
+          aria-describedby={hasError ? `${id}-error` : undefined}
+        />
+        {hasError && (
+          <p
+            id={`${id}-error`}
+            className="text-sm text-red-600 flex items-center gap-1"
+          >
+            <AlertCircle className="h-4 w-4" />
+            {validationErrors[name]}
+          </p>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -138,26 +381,23 @@ export function MdfeDocumentosForm({
               <TabsContent value="nfe" className="space-y-6">
                 <div className="grid grid-cols-6 gap-4">
                   <div className="col-span-3">
-                    <Label htmlFor="chave">* Chave da NF-e</Label>
-                    <Input
-                      id="chave"
-                      name="chave"
-                      value={novoDocumento.chave}
-                      onChange={handleChange}
-                      placeholder="Informe a chave da NF-e (44 dígitos)"
-                      maxLength={44}
-                      autoComplete="off"
-                    />
+                    {renderInputWithValidation(
+                      "chave",
+                      "chave",
+                      "Chave da NF-e",
+                      "Informe a chave da NF-e (44 dígitos)",
+                      "text",
+                      44,
+                      true
+                    )}
                   </div>
                   <div>
-                    <Label htmlFor="segCodBarra">Cód. Barras</Label>
-                    <Input
-                      id="segCodBarra"
-                      name="segCodBarra"
-                      value={novoDocumento.segCodBarra}
-                      onChange={handleChange}
-                      autoComplete="off"
-                    />
+                    {renderInputWithValidation(
+                      "segCodBarra",
+                      "segCodBarra",
+                      "Cód. Barras",
+                      "Código de barras"
+                    )}
                   </div>
                   <div className="flex items-end">
                     <div className="flex items-center gap-2">
@@ -167,72 +407,66 @@ export function MdfeDocumentosForm({
                         name="indReentrega"
                         checked={novoDocumento.indReentrega}
                         onChange={handleChange}
+                        className="rounded border-gray-300"
                       />
                       <Label htmlFor="indReentrega">Reentrega</Label>
                     </div>
                   </div>
                   <div className="flex items-end">
-                    <Button type="button" onClick={handleAddDocumento}>
-                      + Adicionar
+                    <Button
+                      type="button"
+                      onClick={handleAddDocumento}
+                      disabled={isValidating}
+                      className="w-full"
+                    >
+                      {isValidating ? "Validando..." : "+ Adicionar"}
                     </Button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <Label htmlFor="pesoTotal">Peso (Kg)</Label>
-                    <Input
-                      id="pesoTotal"
-                      name="pesoTotal"
-                      value={novoDocumento.pesoTotal}
-                      onChange={handleChange}
-                      placeholder="0,00"
-                      type="number"
-                      step="0.01"
-                      autoComplete="off"
-                    />
+                    {renderInputWithValidation(
+                      "pesoTotal",
+                      "pesoTotal",
+                      "Peso (Kg)",
+                      "0,00",
+                      "number"
+                    )}
                   </div>
                   <div>
-                    <Label htmlFor="valor">Valor</Label>
-                    <Input
-                      id="valor"
-                      name="valor"
-                      value={novoDocumento.valor}
-                      onChange={handleChange}
-                      placeholder="0,00"
-                      type="number"
-                      step="0.01"
-                      autoComplete="off"
-                    />
+                    {renderInputWithValidation(
+                      "valor",
+                      "valor",
+                      "Valor",
+                      "0,00",
+                      "number"
+                    )}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="municipioCarregamento">
-                      Município de Carregamento
-                    </Label>
-                    <Input
-                      id="municipioCarregamento"
-                      name="municipioCarregamento"
-                      value={novoDocumento.municipioCarregamento}
-                      onChange={handleChange}
-                      placeholder="Nome do município"
-                      autoComplete="off"
-                    />
+                    {renderInputWithValidation(
+                      "xMunCarrega",
+                      "xMunCarrega",
+                      "Município de Carregamento",
+                      "Nome do município",
+                      "text",
+                      undefined,
+                      true
+                    )}
                   </div>
                   <div>
-                    <Label htmlFor="municipioDescarregamento">
-                      Município de Descarregamento
-                    </Label>
-                    <Input
-                      id="municipioDescarregamento"
-                      name="municipioDescarregamento"
-                      value={novoDocumento.municipioDescarregamento}
-                      onChange={handleChange}
-                      placeholder="Nome do município"
-                      autoComplete="off"
-                    />
+                    {renderInputWithValidation(
+                      "xMunDescarga",
+                      "xMunDescarga",
+                      "Município de Descarregamento",
+                      "Nome do município",
+                      "text",
+                      undefined,
+                      true
+                    )}
                   </div>
                 </div>
 
@@ -258,7 +492,7 @@ export function MdfeDocumentosForm({
                       <tbody className="bg-white divide-y divide-gray-200">
                         {documentos.nfe.map((doc, index) => (
                           <tr key={index}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">
                               {doc.chave}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

@@ -125,8 +125,10 @@ export interface MdfeInfDoc {
     indReentrega: boolean;
     pesoTotal: string;
     valor: string;
-    municipioCarregamento: string;
-    municipioDescarregamento: string;
+    cMunCarrega: string;
+    xMunCarrega: string;
+    cMunDescarga: string;
+    xMunDescarga: string;
   }>;
   cte: Array<{
     chave: string;
@@ -134,8 +136,10 @@ export interface MdfeInfDoc {
     indReentrega: boolean;
     pesoTotal: string;
     valor: string;
-    municipioCarregamento: string;
-    municipioDescarregamento: string;
+    cMunCarrega: string;
+    xMunCarrega: string;
+    cMunDescarga: string;
+    xMunDescarga: string;
   }>;
   mdf: Array<{
     chave: string;
@@ -143,8 +147,10 @@ export interface MdfeInfDoc {
     indReentrega: boolean;
     pesoTotal: string;
     valor: string;
-    municipioCarregamento: string;
-    municipioDescarregamento: string;
+    cMunCarrega: string;
+    xMunCarrega: string;
+    cMunDescarga: string;
+    xMunDescarga: string;
   }>;
 }
 
@@ -192,21 +198,21 @@ export interface MdfeDocument {
   // Optimized step data using aliases
   ide: MdfeIde;
   emit: MdfeEmitente;
-  rodo: MdfeRodoviario;
-  aquav: MdfeAquaviario;
-  infDoc: MdfeInfDoc;
+  rodo?: MdfeRodoviario;
+  aquav?: MdfeAquaviario;
+  infDoc?: MdfeInfDoc;
   tot: MdfeTotalizadores;
   infAdic: MdfeinfAdic;
-  seg: Array<MdfeSeg>;
-  prodPred: Array<MdfeProdPred>; // Initialize as empty array
-  autXML: Array<{ CNPJCPF: string }>; // Change to Array for consistency
-  lacres: Array<{ nLacre: string }>; // Change to Array for consistency
+  seg?: Array<MdfeSeg>;
+  prodPred?: Array<MdfeProdPred>; // Initialize as empty array
+  autXML?: Array<{ CNPJCPF: string }>; // Change to Array for consistency
+  lacres?: Array<{ nLacre: string }>; // Change to Array for consistency
 
   // Reference data
-  referencia: Record<string, any>;
+  referencia?: Record<string, any>;
 
   // Status and keys
-  status: MdfeStatus;
+  status?: MdfeStatus;
   qrCodMDFe?: string;
   chave?: string;
 
@@ -226,4 +232,9 @@ export interface MdfeFormData
   _id?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  rodo?: MdfeRodoviario;
+  aquav?: MdfeAquaviario;
+  infDoc?: MdfeInfDoc;
+  seg?: Array<MdfeSeg>;
+  status?: MdfeStatus;
 }

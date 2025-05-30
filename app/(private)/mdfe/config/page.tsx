@@ -37,8 +37,6 @@ export default function MdfeConfigPage() {
     // Campos do motorista
     xNome: "",
     cpf: "",
-    municipioCarregamento: "",
-    municipioDescarregamento: "",
   });
 
   const { toast } = useToast();
@@ -91,9 +89,6 @@ export default function MdfeConfigPage() {
         // Campos do motorista
         xNome: config.xNome || "",
         cpf: config.cpf || "",
-        // Campos de município
-        municipioCarregamento: config.municipioCarregamento || "",
-        municipioDescarregamento: config.municipioDescarregamento || "",
       });
 
       toast({
@@ -235,9 +230,6 @@ export default function MdfeConfigPage() {
       // Campos do motorista
       xNome: formData.xNome,
       cpf: formData.cpf,
-      // Campos de município
-      municipioCarregamento: formData.municipioCarregamento,
-      municipioDescarregamento: formData.municipioDescarregamento,
     };
 
     saveMutation.mutate(dataToSave);
@@ -681,53 +673,6 @@ export default function MdfeConfigPage() {
                   placeholder="Digite o CPF do motorista"
                   maxLength={11}
                 />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Dados de Municípios */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Dados de Municípios</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="municipioCarregamento">
-                  Município de Carregamento
-                </Label>
-                <Input
-                  id="municipioCarregamento"
-                  value={formData.municipioCarregamento}
-                  onChange={(e) =>
-                    handleInputChange("municipioCarregamento", e.target.value)
-                  }
-                  placeholder="Nome do município de carregamento"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Município onde será realizado o carregamento da mercadoria
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="municipioDescarregamento">
-                  Município de Descarregamento
-                </Label>
-                <Input
-                  id="municipioDescarregamento"
-                  value={formData.municipioDescarregamento}
-                  onChange={(e) =>
-                    handleInputChange(
-                      "municipioDescarregamento",
-                      e.target.value
-                    )
-                  }
-                  placeholder="Nome do município de descarregamento"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Município onde será realizado o descarregamento da mercadoria
-                </p>
               </div>
             </div>
           </CardContent>
