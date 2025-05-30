@@ -49,10 +49,13 @@ export async function getMunicipioByUfAndDescricao(
   const { client, clientdb } = await TMongo.connectToDatabase();
 
   try {
-    const municipio = await clientdb.collection("municipio").findOne({
-      uf: uf.toUpperCase().trim(),
-      descricao: descricao.toUpperCase().trim(),
-    });
+    const municipio = await clientdb.collection("municipio").findOne(
+      {
+        uf: uf.toUpperCase().trim(),
+        descricao: descricao.toUpperCase().trim(),
+      },
+      { projection: { _id: 0 } }
+    );
 
     return municipio;
   } catch (error) {
@@ -67,9 +70,12 @@ export async function getMunicipioByDescricao(descricao: string) {
   const { client, clientdb } = await TMongo.connectToDatabase();
 
   try {
-    const municipio = await clientdb
-      .collection("municipio")
-      .findOne({ descricao: { $regex: descricao, $options: "i" } });
+    const municipio = await clientdb.collection("municipio").findOne(
+      {
+        descricao: { $regex: descricao.toUpperCase(), $options: "i" },
+      },
+      { projection: { _id: 0 } }
+    );
 
     return municipio;
   } catch (error) {

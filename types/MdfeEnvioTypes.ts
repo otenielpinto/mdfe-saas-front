@@ -129,6 +129,7 @@ export interface MdfeInfDoc {
     xMunCarrega: string;
     cMunDescarga: string;
     xMunDescarga: string;
+    ufDescarga: string;
   }>;
   cte: Array<{
     chave: string;
@@ -140,6 +141,7 @@ export interface MdfeInfDoc {
     xMunCarrega: string;
     cMunDescarga: string;
     xMunDescarga: string;
+    ufDescarga: string;
   }>;
   mdf: Array<{
     chave: string;
@@ -151,6 +153,7 @@ export interface MdfeInfDoc {
     xMunCarrega: string;
     cMunDescarga: string;
     xMunDescarga: string;
+    ufDescarga: string;
   }>;
 }
 

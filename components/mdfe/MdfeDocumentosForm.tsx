@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getMunicipioByUfAndDescricao } from "@/actions/actMunicipio";
 
 // Zod schema for document validation
 const documentoSchema = z.object({
@@ -38,6 +39,11 @@ const documentoSchema = z.object({
     .string()
     .min(1, "Município de descarregamento é obrigatório")
     .min(2, "Município deve ter pelo menos 2 caracteres"),
+  ufDescarga: z
+    .string()
+    .min(1, "UF é obrigatória")
+    .length(2, "UF deve ter exatamente 2 caracteres")
+    .regex(/^[A-Z]{2}$/, "UF deve conter apenas letras maiúsculas"),
 });
 
 // Custom error types
@@ -74,6 +80,7 @@ interface Documento {
   xMunCarrega: string;
   cMunDescarga: string;
   xMunDescarga: string;
+  ufDescarga: string;
 }
 
 export function MdfeDocumentosForm({
@@ -86,6 +93,8 @@ export function MdfeDocumentosForm({
     {}
   );
   const [isValidating, setIsValidating] = useState(false);
+
+  const [selectedUf, setSelectedUf] = useState<string>("RS");
 
   const [documentos, setDocumentos] = useState<{
     nfe: Documento[];
@@ -107,6 +116,7 @@ export function MdfeDocumentosForm({
     xMunCarrega: initialData?.xMunCarrega || "",
     cMunDescarga: initialData?.cMunDescarga || "",
     xMunDescarga: initialData?.xMunDescarga || "",
+    ufDescarga: "RS",
   });
 
   // Update state when initialData changes
@@ -124,6 +134,7 @@ export function MdfeDocumentosForm({
         xMunCarrega: initialData?.xMunCarrega || "",
         cMunDescarga: initialData?.cMunDescarga || "",
         xMunDescarga: initialData?.xMunDescarga || "",
+        ufDescarga: prev.ufDescarga, // Keep the current UF selection
       }));
     }
   }, [initialData]);
@@ -211,6 +222,27 @@ export function MdfeDocumentosForm({
         return;
       }
 
+      // Busca automática do código IBGE para município de carregamento
+      try {
+        if (
+          novoDocumento.xMunDescarga.trim() &&
+          novoDocumento.ufDescarga.trim()
+        ) {
+          const municipioDescarga = await getMunicipioByUfAndDescricao(
+            novoDocumento.ufDescarga.trim(),
+            novoDocumento.xMunDescarga.trim()
+          );
+
+          if (municipioDescarga?.codigoIbge) {
+            novoDocumento.cMunDescarga =
+              municipioDescarga.codigoIbge.toString();
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao buscar código do município de descarga:", error);
+        // Não bloqueia o processo se falhar na busca do município
+      }
+
       // Success path - add document
       setDocumentos((prev) => ({
         ...prev,
@@ -231,6 +263,7 @@ export function MdfeDocumentosForm({
         xMunCarrega: "",
         cMunDescarga: "",
         xMunDescarga: "",
+        ufDescarga: "RS", // Reset to default UF
       });
 
       // Clear any existing errors
@@ -276,7 +309,7 @@ export function MdfeDocumentosForm({
     toast({
       title: "Documento Removido",
       description: "Documento foi removido da lista.",
-      duration: 3000,
+      duration: 2000,
     });
   };
 
@@ -294,7 +327,7 @@ export function MdfeDocumentosForm({
         variant: "destructive",
         title: "Nenhum Documento",
         description: "Adicione pelo menos um documento antes de continuar.",
-        duration: 4000,
+        duration: 3000,
       });
       return;
     }
@@ -457,7 +490,10 @@ export function MdfeDocumentosForm({
                       true
                     )}
                   </div>
-                  <div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2">
                     {renderInputWithValidation(
                       "xMunDescarga",
                       "xMunDescarga",
@@ -466,6 +502,71 @@ export function MdfeDocumentosForm({
                       "text",
                       undefined,
                       true
+                    )}
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="ufDescarga"
+                      className="flex items-center gap-1 after:content-['*'] after:text-red-500"
+                    >
+                      UF
+                    </Label>
+                    <Select
+                      value={novoDocumento.ufDescarga}
+                      onValueChange={(value) => {
+                        setNovoDocumento((prev) => ({
+                          ...prev,
+                          ufDescarga: value,
+                        }));
+                        clearFieldError("ufDescarga");
+                      }}
+                    >
+                      <SelectTrigger
+                        className={cn(
+                          "transition-colors",
+                          validationErrors.ufDescarga && "border-red-500",
+                          !validationErrors.ufDescarga &&
+                            novoDocumento.ufDescarga &&
+                            "border-green-500"
+                        )}
+                      >
+                        <SelectValue placeholder="UF" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AC">AC</SelectItem>
+                        <SelectItem value="AL">AL</SelectItem>
+                        <SelectItem value="AP">AP</SelectItem>
+                        <SelectItem value="AM">AM</SelectItem>
+                        <SelectItem value="BA">BA</SelectItem>
+                        <SelectItem value="CE">CE</SelectItem>
+                        <SelectItem value="DF">DF</SelectItem>
+                        <SelectItem value="ES">ES</SelectItem>
+                        <SelectItem value="GO">GO</SelectItem>
+                        <SelectItem value="MA">MA</SelectItem>
+                        <SelectItem value="MT">MT</SelectItem>
+                        <SelectItem value="MS">MS</SelectItem>
+                        <SelectItem value="MG">MG</SelectItem>
+                        <SelectItem value="PA">PA</SelectItem>
+                        <SelectItem value="PB">PB</SelectItem>
+                        <SelectItem value="PR">PR</SelectItem>
+                        <SelectItem value="PE">PE</SelectItem>
+                        <SelectItem value="PI">PI</SelectItem>
+                        <SelectItem value="RJ">RJ</SelectItem>
+                        <SelectItem value="RN">RN</SelectItem>
+                        <SelectItem value="RS">RS</SelectItem>
+                        <SelectItem value="RO">RO</SelectItem>
+                        <SelectItem value="RR">RR</SelectItem>
+                        <SelectItem value="SC">SC</SelectItem>
+                        <SelectItem value="SP">SP</SelectItem>
+                        <SelectItem value="SE">SE</SelectItem>
+                        <SelectItem value="TO">TO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {validationErrors.ufDescarga && (
+                      <p className="text-sm text-red-600 flex items-center gap-1 mt-1">
+                        <AlertCircle className="h-4 w-4" />
+                        {validationErrors.ufDescarga}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -484,6 +585,17 @@ export function MdfeDocumentosForm({
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Valor
                           </th>
+
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Carrega
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Descarga
+                          </th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            UF
+                          </th>
+
                           <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Ações
                           </th>
@@ -501,6 +613,17 @@ export function MdfeDocumentosForm({
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {doc.valor}
                             </td>
+
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {doc.xMunCarrega}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {doc.xMunDescarga}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">
+                              {doc.ufDescarga}
+                            </td>
+
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <Button
                                 type="button"
