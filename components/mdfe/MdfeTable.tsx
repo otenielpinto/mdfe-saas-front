@@ -297,8 +297,8 @@ export default function MdfeTable({ mdfes }: MdfeTableProps) {
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir o MDF-e{" "}
-              {selectedMdfe?.dados?.serie && selectedMdfe.dados.numero
-                ? `${selectedMdfe.dados.serie}/${selectedMdfe.dados.numero}`
+              {selectedMdfe?.ide?.serie && selectedMdfe.ide.numero
+                ? `${selectedMdfe.ide.serie}/${selectedMdfe.ide.numero}`
                 : selectedMdfe?.id || "selecionado"}
               ? Esta ação não pode ser desfeita.
             </AlertDialogDescription>

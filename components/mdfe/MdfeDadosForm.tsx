@@ -28,7 +28,7 @@ export function MdfeDadosForm({ onSubmit, initialData }: MdfeDadosFormProps) {
     tpEmis: initialData?.tpEmis || "1", // Tipo de Emissão: 1 - Normal, 2 - Contingência
     mod: initialData?.mod || "58", // Modelo do Documento Fiscal (MDF-e)
     serie: initialData?.serie || "1",
-    numero: initialData?.numero || "", // equivalente a nMDF no schema
+    nMDF: initialData?.nMDF || "", // equivalente a nMDF no schema
     cMDF: initialData?.cMDF || "", // Tipo do Documento Fiscal
     cDV: initialData?.cDV || "", // Dígito Verificador
     dhEmi: initialData?.dhEmi || "", // Data e hora de emissão do MDF-e
@@ -194,11 +194,11 @@ export function MdfeDadosForm({ onSubmit, initialData }: MdfeDadosFormProps) {
               />
             </div>
             <div>
-              <Label htmlFor="numero">Número</Label>
+              <Label htmlFor="nMDF">Número</Label>
               <Input
-                id="numero"
-                name="numero"
-                value={formData.numero}
+                id="nMDF"
+                name="nMDF"
+                value={formData.nMDF}
                 onChange={handleChange}
                 placeholder="Número do MDF-e"
               />

@@ -21,13 +21,13 @@ export function isValidObjectId(id: string): boolean {
 
 // Step mapping configuration for MongoDB storage optimization
 export const MDFE_STEP_MAPPINGS = {
-  Dados: "ide",
-  Emitente: "emit",
-  Rodoviario: "rodo",
-  Aquaviario: "aquav",
-  "Informacoes dos Documentos": "infDoc",
-  Totalizadores: "tot",
-  "Informacoes adicionais": "infAdic",
+  ide: "ide",
+  emit: "emit",
+  rodo: "rodo",
+  aquav: "aquav",
+  infDoc: "infDoc",
+  tot: "tot",
+  infAdic: "infAdic",
 } as const;
 
 // Reverse mapping for alias to name conversion
@@ -45,15 +45,6 @@ export const getStepAlias = (stepName: string): string => {
     MDFE_STEP_MAPPINGS[stepName as keyof typeof MDFE_STEP_MAPPINGS] ||
     stepName.toLowerCase().replace(/ /g, "_")
   );
-};
-
-/**
- * Convert an alias back to the full step name
- * @param alias - The compact alias
- * @returns The full step name
- */
-export const getStepNameFromAlias = (alias: string): string => {
-  return MDFE_ALIAS_TO_NAME[alias] || alias;
 };
 
 /**
@@ -95,33 +86,6 @@ export const validateStepData = (
   return {
     isValid: missingSteps.length === 0,
     missingSteps,
-  };
-};
-
-/**
- * Get storage size estimation for optimized form data
- * @param formData - The form data to analyze (using aliases)
- * @returns Object with size estimates in bytes
- */
-export const getStorageSizeEstimate = (
-  formData: any
-): {
-  size: number;
-  estimatedSavings: number;
-} => {
-  if (!formData) return { size: 0, estimatedSavings: 0 };
-
-  const aliasedSize = JSON.stringify(formData).length;
-
-  // Estimate what the legacy size would have been (approximately 2.5x larger)
-  const estimatedLegacySize = Math.round(aliasedSize * 2.5);
-  const estimatedSavings = Math.round(
-    ((estimatedLegacySize - aliasedSize) / estimatedLegacySize) * 100
-  );
-
-  return {
-    size: aliasedSize,
-    estimatedSavings,
   };
 };
 

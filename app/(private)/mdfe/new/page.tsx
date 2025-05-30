@@ -34,12 +34,12 @@ import { v4 as uuidv4 } from "uuid";
 import { useRouter } from "next/navigation";
 import { lib } from "@/lib/lib";
 import {
-  getStepAlias,
   getFormDataForStep,
   validateStepData,
   initializeOptimizedFormData,
 } from "@/lib/utils";
 
+const stepsDoc = ["ide", "emit", "rodo", "aquav", "infDoc", "tot", "infAdic"];
 const steps = [
   "Dados",
   "Emitente",
@@ -168,7 +168,7 @@ export default function NewMdfePage() {
             tpEmis: config.tpEmis?.toString() || "1",
             mod: config.mod?.toString() || "58",
             serie: config.serie?.toString() || "1",
-            numero: "",
+            nMDF: "",
             cMDF: cMDF,
             cDV: "",
             dhEmi: lib.formatDateForInput(new Date()),
@@ -179,6 +179,8 @@ export default function NewMdfePage() {
               second: "2-digit",
             }),
             tpModal: config.modal?.toString() || "1",
+            procEmi: "",
+            verProc: config.verProc || "1.0",
             ufIni: config.UFIni || "",
             ufFim: config.UFFim || "",
             dhIniViagem: "",
@@ -223,6 +225,14 @@ export default function NewMdfePage() {
             tpCar: config.tpCar || "",
             tpRod: config.tpRod || "",
             condutores: [{ xNome: config.xNome || "", cpf: config.cpf || "" }],
+            rntrc: config.rntrc || "",
+            ciot: config.ciot || "",
+            infANTT: {},
+            veicTracao: {},
+            veicReboque: {},
+            valePed: {},
+            codAgPorto: config.codAgPorto || "",
+            lacRodo: [], // Initialize as empty collection
           },
 
           tot: {
@@ -233,6 +243,30 @@ export default function NewMdfePage() {
             cUnid: "",
             qCarga: "",
           },
+          infDoc: {
+            nfe: [],
+            cte: [],
+            mdf: [],
+            municipioCarregamento: config.municipioCarregamento || "",
+            municipioDescarregamento: config.municipioDescarregamento || "",
+          },
+          infAdic: {
+            infCpl: "",
+            infAdFisco: "",
+          },
+          seg: {},
+          prodPred: [], // Initialize as empty array
+          infMDFeSupl: {},
+          infRespTec: {
+            cnpj: "",
+            xContato: "",
+            email: "",
+            fone: "",
+            idCSRT: 0,
+            hashCSRT: "",
+          },
+          autXML: [],
+          lacres: [],
 
           // Keep existing fields for compatibility
           referencia: {},
@@ -348,22 +382,21 @@ export default function NewMdfePage() {
   };
 
   const handleSubmitStep = (stepData: any) => {
-    const stepName = steps[currentStep];
-    const stepAlias = getStepAlias(stepName);
+    const stepName = stepsDoc[currentStep];
 
     setFormData((prev: any) => ({
       ...prev,
-      [stepAlias]: stepData,
+      [stepName]: stepData,
     }));
 
-    console.log(`Dados do passo "${stepName}" (${stepAlias}):`, stepData);
+    console.log(`Dados do passo "${stepName}" (${stepName}):`, stepData);
 
     if (currentStep < steps.length - 1) {
       handleNext();
     } else {
       console.log("Formulário completo:", {
         ...formData,
-        [stepAlias]: stepData,
+        [stepName]: stepData,
       });
     }
   };
@@ -379,7 +412,7 @@ export default function NewMdfePage() {
     }
 
     // Validate required fields using centralized validation
-    const requiredSteps = ["Emitente"];
+    const requiredSteps = ["emit"];
     const validation = validateStepData(formData, requiredSteps);
 
     if (!validation.isValid) {

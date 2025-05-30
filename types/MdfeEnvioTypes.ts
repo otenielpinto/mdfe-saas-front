@@ -40,16 +40,6 @@ export enum TipoEmissao {
 // Form mode type
 export type MdfeFormMode = "create" | "edit";
 
-// Step mapping types for MongoDB storage optimization
-export type MdfeStepName =
-  | "Dados"
-  | "Emitente"
-  | "Rodoviario"
-  | "Aquaviario"
-  | "Informacoes dos Documentos"
-  | "Totalizadores"
-  | "Informacoes adicionais";
-
 export type MdfeStepAlias =
   | "ide"
   | "emit"
@@ -60,7 +50,7 @@ export type MdfeStepAlias =
   | "infAdic";
 
 // Individual step types for better organization
-export interface MdfeDados {
+export interface MdfeIde {
   cUF: string;
   tpEmit: string;
   tpTransp: string;
@@ -68,7 +58,7 @@ export interface MdfeDados {
   tpEmis: TipoEmissao;
   mod: string;
   serie: string;
-  numero: string;
+  nMDF: string;
   cMDF: string;
   cDV: string;
   dhEmi: string;
@@ -128,7 +118,7 @@ export interface MdfeAquaviario {
   balsa: Array<any>;
 }
 
-export interface MdfeDocumentos {
+export interface MdfeInfDoc {
   nfe: Array<{
     chave: string;
     segCodBarra?: string;
@@ -167,9 +157,27 @@ export interface MdfeTotalizadores {
   qCarga: string;
 }
 
-export interface MdfeInformacoesAdicionais {
+export interface MdfeinfAdic {
   infAdFisco?: string;
   infCpl?: string;
+}
+
+export interface MdfeProdPred {
+  tpCarga: string;
+  xProd: string;
+  cEAN: string;
+  ncm: string;
+  infLocalCarrega: {};
+  infLocalDescarrega: {};
+}
+
+export interface MdfeSeg {
+  respSeg: any;
+  CNPJCPF: string;
+  xSeg: string;
+  CNPJ: string;
+  nApol: string;
+  aver: any;
 }
 
 /**
@@ -182,13 +190,17 @@ export interface MdfeDocument {
   dt_movto: Date;
 
   // Optimized step data using aliases
-  ide: MdfeDados;
+  ide: MdfeIde;
   emit: MdfeEmitente;
   rodo: MdfeRodoviario;
   aquav: MdfeAquaviario;
-  infDoc: MdfeDocumentos;
+  infDoc: MdfeInfDoc;
   tot: MdfeTotalizadores;
-  infAdic: MdfeInformacoesAdicionais;
+  infAdic: MdfeinfAdic;
+  seg: Array<MdfeSeg>;
+  prodPred: Array<MdfeProdPred>; // Initialize as empty array
+  autXML: Array<{ CNPJCPF: string }>; // Change to Array for consistency
+  lacres: Array<{ nLacre: string }>; // Change to Array for consistency
 
   // Reference data
   referencia: Record<string, any>;
